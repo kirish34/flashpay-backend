@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USSD Simulator - Flash Pay</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #000;
+      color: #0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .ussd-screen {
+      border: 2px solid #0f0;
+      padding: 20px;
+      width: 300px;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .display {
+      background: #111;
+      color: #0f0;
+      height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #0f0;
+    }
+    .input-group {
+      display: flex;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+    }
+    button {
+      padding: 8px 12px;
+      background: #0f0;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>USSD Simulator - *123#</h2>
+  <div class="ussd-screen">
+    <div class="display" id="ussdDisplay">Dial *123*TXCODE# to begin</div>
+    <div class="input-group">
+      <input type="text" id="ussdInput" placeholder="*123*7349#" />
+      <button onclick="submitUSSD()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    async function submitUSSD() {
+      const input = document.getElementById("ussdInput").value.trim();
+      const display = document.getElementById("ussdDisplay");
+      display.innerHTML += `\n> ${input}`;
+
+      const match = input.match(/\*123\*(\d+)#/);
+      if (!match) {
+        display.innerHTML += "\nInvalid format. Use *123*TXCODE#";
+        return;
+      }
+
+      const txCode = match[1];
+      const msisdn = prompt("Enter phone number (2547...) to receive STK Push:");
+      if (!msisdn) return;
+
+      try {
+        const res = await fetch("http://localhost:4500/ussd", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ txCode, msisdn })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          display.innerHTML += `\n✅ STK Push triggered to ${msisdn}`;
+        } else {
+          display.innerHTML += `\n❌ Error: ${data.error || "Unknown issue"}`;
+        }
+      } catch (err) {
+        display.innerHTML += "\n❌ Network error.";
+      }
+    }
+  </script>
+</body>
+</html>

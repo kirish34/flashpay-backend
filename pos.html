@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flash Pay POS</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
+    #output { background: #f0f0f0; padding: 15px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h2>💳 Flash Pay POS</h2>
+
+  <label>Total Amount (KES):</label>
+  <input type="number" id="amount" placeholder="e.g. 100">
+
+  <label>Cashier ID:</label>
+  <input type="text" id="till" placeholder="e.g. 001">
+
+  <button onclick="generateTx()">Generate TX Code</button>
+
+  <div id="output"></div>
+
+  <script>
+    async function generateTx() {
+      const amount = document.getElementById("amount").value;
+      const till = document.getElementById("till").value;
+
+      const response = await fetch("http://localhost:3000/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, till })
+      });
+
+      const data = await response.json();
+
+      const out = `
+        <strong>TX Code:</strong> ${data.tx.code} <br>
+        <strong>Amount:</strong> KES ${data.tx.amount} <br>
+        <strong>Cashier:</strong> ${data.tx.till} <br>
+        <strong>Dial:</strong> *234*${data.tx.code}#
+      `;
+      document.getElementById("output").innerHTML = out;
+    }
+  </script>
+
+</body>
+</html>

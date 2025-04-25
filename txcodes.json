@@ -1,0 +1,99 @@
+[
+  {
+    "code": 9908,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T16:53:14.419Z",
+    "status": "expired",
+    "checkoutId": "ws_CO_25042025195419457722317830"
+  },
+  {
+    "code": 9063,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T16:22:03.106Z",
+    "status": "expired",
+    "checkoutId": "ws_CO_25042025192303948722317830"
+  },
+  {
+    "code": 2077,
+    "createdAt": "2025-04-25T16:19:32.981Z",
+    "status": "expired"
+  },
+  {
+    "code": 6495,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T14:31:30.736Z",
+    "status": "expired",
+    "checkoutId": "ws_CO_25042025173406317722317830"
+  },
+  {
+    "code": 8522,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T13:45:15.891Z",
+    "status": "expired",
+    "checkoutId": "ws_CO_25042025164630852722317830"
+  },
+  {
+    "code": 3416,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T14:05:30.328Z",
+    "status": "expired",
+    "checkoutId": "ws_CO_25042025170833124722317830"
+  },
+  {
+    "code": 3324,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T14:43:41.939Z",
+    "status": "expired",
+    "checkoutId": "ws_CO_25042025174624464722317830"
+  },
+  {
+    "code": 2538,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T16:24:46.750Z",
+    "status": "expired",
+    "checkoutId": "ws_CO_25042025192623269722317830"
+  },
+  {
+    "code": 2302,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T17:15:08.435Z",
+    "status": "expired"
+  },
+  {
+    "code": 9295,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T17:21:53.579Z",
+    "status": "expired"
+  },
+  {
+    "code": 8340,
+    "amount": 10,
+    "till": "001",
+    "createdAt": "2025-04-25T17:36:06.907Z",
+    "status": "paid",
+    "checkoutId": "ws_CO_25042025203908254722317830"
+  },
+  {
+    "code": 4962,
+    "amount": "10",
+    "till": "123",
+    "createdAt": "2025-04-25T17:57:48.117Z",
+    "status": "expired"
+  },
+  {
+    "code": 4891,
+    "amount": "23",
+    "till": "01",
+    "createdAt": "2025-04-25T18:01:30.585Z",
+    "status": "expired"
+  }
+]
