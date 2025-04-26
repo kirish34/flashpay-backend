@@ -1,109 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Flash Pay USSD Simulator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #e5e5e5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .ussd-screen {
-      background-color: #000;
-      color: #0f0;
-      padding: 20px;
-      width: 300px;
-      height: 400px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-    .screen {
-      background-color: #111;
-      padding: 10px;
-      flex-grow: 1;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-    input[type="text"] {
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      border: none;
-      border-radius: 5px;
-      outline: none;
-    }
-    button {
-      padding: 10px;
-      font-size: 16px;
-      background-color: #0f0;
-      border: none;
-      border-radius: 5px;
-      margin-top: 5px;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Flash Pay USSD Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .ussd-screen {
+            background-color: #000;
+            color: #0f0;
+            padding: 20px;
+            width: 300px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .screen {
+            background-color: #111;
+            padding: 10px;
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #0f0;
+            border: none;
+            border-radius: 5px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="ussd-screen">
-  <div class="screen" id="screen">
-    Welcome to Flash Pay<br>Enter TX code to pay:
-  </div>
-
-  <form id="ussdForm">
-    <input type="text" id="ussdInput" placeholder="e.g. 1234">
-    <button type="submit">Send</button>
-  </form>
+    <div class="screen" id="screen">
+        Welcome to Flash Pay<br>Enter TX code to pay:
+    </div>
+    <input type="text" id="input" placeholder="e.g. 1234">
+    <button onclick="handleUSSD()">Send</button>
 </div>
 
 <script>
-  const form = document.getElementById('ussdForm');
-  const input = document.getElementById('ussdInput');
-  const screen = document.getElementById('screen');
+    let stage = 'enter_txcode'; // track where user is: txcode or pin
+    let storedTXCode = null;
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const txcode = input.value.trim();
+    async function handleUSSD() {
+        const input = document.getElementById('input').value.trim();
+        const screen = document.getElementById('screen');
 
-    if (!txcode) {
-      screen.innerHTML += "<br>❌ Please enter a TX code!";
-      return;
+        if (stage === 'enter_txcode') {
+            if (!input) {
+                screen.innerHTML += "<br>❌ Please enter a TX code!";
+                return;
+            }
+
+            screen.innerHTML += `<br>🔄 Processing TX code ${input}...`;
+
+            try {
+                const response = await fetch('https://flashpay-backend-swkk.onrender.com/ussd', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ txcode: input })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    storedTXCode = input; // save it for later use
+                    screen.innerHTML += `<br>✅ TX code ${input} accepted.`;
+                    screen.innerHTML += "<br>💰 Please enter your M-Pesa PIN:";
+                    document.getElementById('input').value = '';
+                    document.getElementById('input').placeholder = 'Enter PIN';
+                    stage = 'enter_pin'; // move to next stage
+                } else {
+                    screen.innerHTML += `<br>❌ ${data.message || 'Invalid TX code.'}`;
+                }
+            } catch (error) {
+                console.error(error);
+                screen.innerHTML += "<br>❌ Network error!";
+            }
+        } 
+        else if (stage === 'enter_pin') {
+            if (!input) {
+                screen.innerHTML += "<br>❌ Please enter your M-Pesa PIN!";
+                return;
+            }
+
+            // Simulate payment success
+            screen.innerHTML += `<br>✅ Payment successful for TX code ${storedTXCode}!`;
+            screen.innerHTML += "<br>🎉 Thank you for using Flash Pay!";
+
+            document.getElementById('input').disabled = true;
+            document.querySelector('button').disabled = true;
+        }
     }
-
-    try {
-      const response = await fetch('https://flashpay-backend-swkk.onrender.com/ussd', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ txcode })
-      });
-
-      const data = await response.json();
-
-      if (data.message) {
-        screen.innerHTML += `<br>✅ ${data.message}`;
-      } else {
-        screen.innerHTML += "<br>❌ Something went wrong!";
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      screen.innerHTML += "<br>❌ Network error!";
-    }
-
-    input.value = '';
-  });
 </script>
 
 </body>
