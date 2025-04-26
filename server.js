@@ -128,6 +128,7 @@ app.post('/callback', (req, res) => {
 });
 
 // 🔥 Start Server
-app.listen(port, () => {
-  console.log(`🚀 Flash Pay backend live on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`🚀 Flash Pay backend live on port ${port}`);
 });
+
