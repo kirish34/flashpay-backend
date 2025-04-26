@@ -7,73 +7,11 @@ const fs = require('fs-extra');
 const path = require('path');
 
 // 🚀 App Initialization
-const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+app.use(cors());
 app.use(express.json());
-
-// 🚀 Add this POST route handler:
-// Flash Pay simple /generate endpoint
-app.post('/generate', (req, res) => {
-  const { amount, till } = req.body;
-
-  if (!amount || !till) {
-      return res.status(400).json({ message: 'Missing amount or till' });
-  }
-
-  // Here you can later add your TX code logic
-  const fakeTxCode = Math.floor(1000 + Math.random() * 9000); // random 4-digit TX code for demo
-
-  res.status(200).json({
-      message: 'TX code generated successfully!',
-      txCode: fakeTxCode,
-      amount,
-      till
-  });
-});
-
-// Default route (this is already working)
-app.get('/', (req, res) => {
-    res.send('🚀 Flash Pay API is running!');
-});
-
-// Bind to 0.0.0.0 for Render
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Flash Pay backend live on http://localhost:${PORT}`);
-});
-
-
-// Test Route - homepage
-app.get('/', (req, res) => {
-  res.send('🚀 Flash Pay API is running!');
-});
-
-// Real Route - for POST /generate
-app.post('/generate', async (req, res) => {
-  const { amount, till } = req.body;
-
-  if (!amount || !till) {
-    return res.status(400).json({ error: 'Amount and Till are required' });
-  }
-
-  const txCode = Math.floor(1000 + Math.random() * 9000);
-
-  const newTx = {
-    code: txCode,
-    amount,
-    till,
-    createdAt: new Date(),
-    status: 'pending'
-  };
-
-  res.json({ message: 'TX code generated', tx: newTx });
-});
-
-// 🔥 Start Server
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Flash Pay backend live on port ${port}`);
-});
 
 // 🔐 Safaricom Daraja Credentials
 const consumerKey = process.env.CONSUMER_KEY;
@@ -106,14 +44,19 @@ function saveTXs() {
     .catch(err => console.error('❌ Failed to save TXs:', err));
 }
 
-// 🏡 Root route for Render
+// 🏡 Root Route
 app.get('/', (req, res) => {
   res.send('🚀 Flash Pay API is running!');
 });
 
 // 🔁 Generate TX Code
-app.post('/generate', async (req, res) => {
+app.post('/generate', (req, res) => {
   const { amount, till } = req.body;
+
+  if (!amount || !till) {
+    return res.status(400).json({ error: 'Amount and Till are required' });
+  }
+
   const txCode = Math.floor(1000 + Math.random() * 9000);
 
   const newTx = {
@@ -190,7 +133,6 @@ app.post('/callback', (req, res) => {
 });
 
 // 🔥 Start Server
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Flash Pay backend live on port ${port}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Flash Pay backend live on port ${PORT}`);
 });
-
