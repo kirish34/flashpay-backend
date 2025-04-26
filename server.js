@@ -17,6 +17,8 @@ const consumerSecret = process.env.CONSUMER_SECRET;
 const passkey = process.env.PASSKEY;
 const shortcode = process.env.SHORTCODE;
 const callbackURL = process.env.CALLBACK_URL;
+// 📁 TX code file path
+const txFile = path.join(__dirname, 'txcodes.json');
 // 🧠 In-memory TX storage
 let txCodes = [];
 
