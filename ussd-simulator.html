@@ -1,101 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>USSD Simulator - Flash Pay</title>
-  <style>
-    body {
-      font-family: monospace;
-      background: #000;
-      color: #0f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .ussd-screen {
-      border: 2px solid #0f0;
-      padding: 20px;
-      width: 300px;
-      height: 400px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .display {
-      background: #111;
-      color: #0f0;
-      height: 300px;
-      overflow-y: auto;
-      padding: 10px;
-      border: 1px solid #0f0;
-    }
-    .input-group {
-      display: flex;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 8px;
-      background: #000;
-      color: #0f0;
-      border: 1px solid #0f0;
-    }
-    button {
-      padding: 8px 12px;
-      background: #0f0;
-      border: none;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Flash Pay USSD Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .ussd-screen {
+            background-color: #000;
+            color: #0f0;
+            padding: 20px;
+            width: 300px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .screen {
+            background-color: #111;
+            padding: 10px;
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #0f0;
+            border: none;
+            border-radius: 5px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <h2>USSD Simulator - *123#</h2>
-  <div class="ussd-screen">
-    <div class="display" id="ussdDisplay">Dial *123*TXCODE# to begin</div>
-    <div class="input-group">
-      <input type="text" id="ussdInput" placeholder="*123*7349#" />
-      <button onclick="submitUSSD()">Send</button>
+
+<div class="ussd-screen">
+    <div class="screen" id="screen">
+        Welcome to Flash Pay<br>Enter TX code to pay:
     </div>
-  </div>
+    <input type="text" id="input" placeholder="e.g. *234*123#">
+    <button onclick="sendUSSD()">Send</button>
+</div>
 
-  <script>
-    async function submitUSSD() {
-      const input = document.getElementById("ussdInput").value.trim();
-      const display = document.getElementById("ussdDisplay");
-      display.innerHTML += `\n> ${input}`;
+<script>
+    async function sendUSSD() {
+        const input = document.getElementById('input').value.trim();
+        const screen = document.getElementById('screen');
 
-      const match = input.match(/\*123\*(\d+)#/);
-      if (!match) {
-        display.innerHTML += "\nInvalid format. Use *123*TXCODE#";
-        return;
-      }
-
-      const txCode = match[1];
-      const msisdn = prompt("Enter phone number (2547...) to receive STK Push:");
-      if (!msisdn) return;
-
-      try {
-        const res = await fetch("http://localhost:4500/ussd", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txCode, msisdn })
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          display.innerHTML += `\n✅ STK Push triggered to ${msisdn}`;
-        } else {
-          display.innerHTML += `\n❌ Error: ${data.error || "Unknown issue"}`;
+        if (!input.startsWith('*') || !input.endsWith('#')) {
+            screen.innerHTML += "<br>❌ Invalid USSD format!";
+            return;
         }
-      } catch (err) {
-        display.innerHTML += "\n❌ Network error.";
-      }
+
+        // Extract TX code from input like *234*123#
+        const parts = input.split('*');
+        if (parts.length < 2) {
+            screen.innerHTML += "<br>❌ Invalid TX code!";
+            return;
+        }
+        const txcode = parts[1].replace('#', '');
+
+        try {
+            const response = await fetch('https://flashpay-backend-swkk.onrender.com/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    amount: 10,
+                    till: '001'
+                })
+            });
+
+            const data = await response.json();
+            screen.innerHTML += `<br>✅ TX Code ${data.tx.code} for Ksh ${data.tx.amount} generated!`;
+        } catch (err) {
+            console.error(err);
+            screen.innerHTML += "<br>❌ Network error!";
+        }
     }
-  </script>
+</script>
+
 </body>
 </html>
