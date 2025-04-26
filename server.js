@@ -10,8 +10,40 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 10000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// Test Route - homepage
+app.get('/', (req, res) => {
+  res.send('🚀 Flash Pay API is running!');
+});
+
+// Real Route - for POST /generate
+app.post('/generate', async (req, res) => {
+  const { amount, till } = req.body;
+
+  if (!amount || !till) {
+    return res.status(400).json({ error: 'Amount and Till are required' });
+  }
+
+  const txCode = Math.floor(1000 + Math.random() * 9000);
+
+  const newTx = {
+    code: txCode,
+    amount,
+    till,
+    createdAt: new Date(),
+    status: 'pending'
+  };
+
+  res.json({ message: 'TX code generated', tx: newTx });
+});
+
+// 🔥 Start Server
+app.listen(port, '0.0.0.0', () => {
+  console.log(`🚀 Flash Pay backend live on port ${port}`);
+});
 
 // 🔐 Safaricom Daraja Credentials
 const consumerKey = process.env.CONSUMER_KEY;
