@@ -11,6 +11,17 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// 🛜 Add Root
+app.get('/', (req, res) => {
+  res.send('🚀 Flash Pay API is running!');
+});
+
+// 🔁 Generate TX Code
+app.post('/generate', async (req, res) => {
+  ...
+});
+
+
 // 🔐 Safaricom Daraja Credentials
 const consumerKey = process.env.CONSUMER_KEY;
 const consumerSecret = process.env.CONSUMER_SECRET;
