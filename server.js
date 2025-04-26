@@ -16,12 +16,7 @@ const consumerKey = process.env.CONSUMER_KEY;
 const consumerSecret = process.env.CONSUMER_SECRET;
 const passkey = process.env.PASSKEY;
 const shortcode = process.env.SHORTCODE;
-const callbackURL = 'https://a347-102-209-78-5.ngrok-free.app/callback';
-
-
-// 📁 TX code file path
-const txFile = path.join(__dirname, 'txcodes.json');
-
+const callbackURL = process.env.CALLBACK_URL;
 // 🧠 In-memory TX storage
 let txCodes = [];
 
