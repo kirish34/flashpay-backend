@@ -7,12 +7,32 @@ const fs = require('fs-extra');
 const path = require('path');
 
 // 🚀 App Initialization
+const express = require('express');
 const app = express();
-const port = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000;
 
-// Middleware
-app.use(cors());
 app.use(express.json());
+
+// 🚀 Add this POST route handler:
+app.post('/generate', (req, res) => {
+    const { amount, till } = req.body;
+    if (!amount || !till) {
+        return res.status(400).json({ message: 'Missing amount or till' });
+    }
+    // Example response (You can modify later)
+    res.status(200).json({ message: `Generated code for amount ${amount} and till ${till}` });
+});
+
+// Default route (this is already working)
+app.get('/', (req, res) => {
+    res.send('🚀 Flash Pay API is running!');
+});
+
+// Bind to 0.0.0.0 for Render
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Flash Pay backend live on http://localhost:${PORT}`);
+});
+
 
 // Test Route - homepage
 app.get('/', (req, res) => {
