@@ -14,13 +14,23 @@ const PORT = process.env.PORT || 10000;
 app.use(express.json());
 
 // 🚀 Add this POST route handler:
+// Flash Pay simple /generate endpoint
 app.post('/generate', (req, res) => {
-    const { amount, till } = req.body;
-    if (!amount || !till) {
-        return res.status(400).json({ message: 'Missing amount or till' });
-    }
-    // Example response (You can modify later)
-    res.status(200).json({ message: `Generated code for amount ${amount} and till ${till}` });
+  const { amount, till } = req.body;
+
+  if (!amount || !till) {
+      return res.status(400).json({ message: 'Missing amount or till' });
+  }
+
+  // Here you can later add your TX code logic
+  const fakeTxCode = Math.floor(1000 + Math.random() * 9000); // random 4-digit TX code for demo
+
+  res.status(200).json({
+      message: 'TX code generated successfully!',
+      txCode: fakeTxCode,
+      amount,
+      till
+  });
 });
 
 // Default route (this is already working)
