@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "author": "Ayub",
+  "author": "Ayub Kinyua",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.9.0",
@@ -20,5 +20,5 @@
   "devDependencies": {
     "nodemon": "^2.0.22"
   },
-  "keywords": []
+  "keywords": ["flashpay", "backend", "payment", "ussd", "mpesa"]
 }
