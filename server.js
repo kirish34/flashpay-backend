@@ -11,14 +11,36 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// 🛜 Add Root
+// 🛜 Root route to check if server is alive
 app.get('/', (req, res) => {
   res.send('🚀 Flash Pay API is running!');
 });
 
 // 🔁 Generate TX Code
 app.post('/generate', async (req, res) => {
-  ...
+  const { amount, till } = req.body;
+  const txCode = Math.floor(1000 + Math.random() * 9000);
+
+  const newTx = {
+    code: txCode,
+    amount,
+    till,
+    createdAt: new Date(),
+    status: 'pending'
+  };
+
+  txCodes.push(newTx);
+  saveTXs();
+
+  // (Optional) Notify POS Listener if needed later
+  try {
+    await axios.post('http://localhost:4000/newtx', newTx);
+    console.log(`📡 Sent TX ${txCode} to POS Listener`);
+  } catch (err) {
+    console.error('⚠️ POS Listener Notification Failed:', err.message);
+  }
+
+  res.json({ message: 'TX code generated', tx: newTx });
 });
 
 
