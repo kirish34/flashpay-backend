@@ -131,6 +131,15 @@ app.post('/callback', (req, res) => {
   console.log('📥 M-Pesa Callback Received:', JSON.stringify(req.body, null, 2));
   res.status(200).json({ message: 'Callback processed' });
 });
+app.post('/ussd', (req, res) => {
+  const { txcode } = req.body;
+  if (!txcode) {
+      return res.status(400).json({ message: 'TX code missing' });
+  }
+
+  // For now just confirm receipt of TX code
+  res.status(200).json({ message: `Received TX code ${txcode}` });
+});
 
 // 🔥 Start Server
 app.listen(PORT, '0.0.0.0', () => {
