@@ -10,6 +10,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// 📁 Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -49,7 +50,7 @@ app.get('/', (req, res) => {
   res.send('🚀 Flash Pay API is running!');
 });
 
-// 🔁 Generate TX Code
+// 🔁 Generate TX Code Route
 app.post('/generate', (req, res) => {
   const { amount, till } = req.body;
 
@@ -73,7 +74,7 @@ app.post('/generate', (req, res) => {
   res.json({ message: 'TX code generated', tx: newTx });
 });
 
-// 🔎 View all TX codes
+// 🔎 View All TX Codes
 app.get('/txcodes', (req, res) => {
   res.json(txCodes);
 });
@@ -88,7 +89,7 @@ async function getAccessToken() {
   return response.data.access_token;
 }
 
-// 💳 Manual STK Push Trigger
+// 💳 Manual STK Push
 app.post('/stkpush', async (req, res) => {
   const { phone, amount } = req.body;
   if (!phone || !amount) return res.status(400).json({ error: 'Missing phone or amount' });
@@ -119,7 +120,6 @@ app.post('/stkpush', async (req, res) => {
     );
 
     res.json({ message: 'STK Push sent', safaricom: response.data });
-
   } catch (err) {
     console.error('❌ STK Push Failed:', err.response?.data || err.message);
     res.status(500).json({ error: 'STK Push error', details: err.response?.data || err.message });
@@ -134,5 +134,5 @@ app.post('/callback', (req, res) => {
 
 // 🔥 Start Server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Flash Pay backend live on port ${PORT}`);
+  console.log(`🚀 Flash Pay backend live on http://localhost:${PORT}`);
 });
