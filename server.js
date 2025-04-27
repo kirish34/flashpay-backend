@@ -5,6 +5,7 @@ const cors = require('cors');
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
+let activeBills = {};
 
 // 🚀 App Initialization
 const app = express();
