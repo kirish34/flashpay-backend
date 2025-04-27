@@ -22,7 +22,10 @@ const shortcode = process.env.SHORTCODE;
 const callbackURL = process.env.CALLBACK_URL;
 
 // 🧠 In-memory Active Bills
-let activeBills = {}; // { ussdCode: { amount, phone, status, createdAt } }
+app.get('/admin/active-bills', (req, res) => {
+  res.json(activeBills);
+});
+
 
 // 📥 Load TX Codes file (for future upgrade if needed)
 const txFile = path.join(__dirname, 'txcodes.json');
@@ -68,19 +71,33 @@ app.post('/register-cashier', (req, res) => {
   res.json({ message: 'Cashier registered successfully', ussdCode, branchName, cashierName });
 });
 
-// 2. 💸 Send Bill
-app.post('/send-bill', (req, res) => {
+// 🧾 Cashier Sends Bill
+app.post('/pos/send-bill', (req, res) => {
   const { ussdCode, amount } = req.body;
+
   if (!ussdCode || !amount) {
-    return res.status(400).json({ error: 'Missing USSD code or amount' });
+    return res.status(400).json({ message: 'ussdCode and amount required' });
   }
+
+  // Check if the USSD already has a pending bill
+  if (activeBills[ussdCode] && activeBills[ussdCode].status === 'pending') {
+    // If already a pending bill, mark it as "other_payment" (overwritten)
+    activeBills[ussdCode].status = 'other_payment';
+  }
+
+  // Save the new bill
   activeBills[ussdCode] = {
     amount,
+    phone: null,
     status: 'pending',
     createdAt: new Date()
   };
-  res.json({ message: 'Bill received', ussdCode, amount });
+
+  console.log(`🧾 New bill: ${ussdCode} => ${amount} KES`);
+
+  res.json({ message: 'Bill received', bill: activeBills[ussdCode] });
 });
+
 
 // 3. 📲 Customer USSD Dial
 app.post('/ussd', async (req, res) => {
