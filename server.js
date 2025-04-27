@@ -5,11 +5,14 @@ const cors = require('cors');
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
-let activeBills = {};
+
+// 🧠 In-memory Active Bills (Fixed Declaration)
+let activeBills = {}; // { ussdCode: { amount, phone, status, createdAt } }
 
 // 🚀 App Initialization
 const app = express();
 const PORT = process.env.PORT || 10000;
+
 
 // 📁 Middleware
 app.use(cors());
