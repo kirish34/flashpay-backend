@@ -186,6 +186,12 @@ setInterval(() => {
   });
 }, 30000); // Run every 30 seconds
 
+setInterval(() => {
+  axios.get('https://flashpay-backend-svkk.onrender.com/')
+    .then(() => console.log('🚀 Self-ping successful'))
+    .catch((err) => console.error('⚠️ Self-ping failed:', err.message));
+}, 1000 * 60 * 4); // every 4 minutes
+
 // 🔥 Start Server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Flash Pay backend live on http://localhost:${PORT}`);
