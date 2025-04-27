@@ -21,63 +21,28 @@ const passkey = process.env.PASSKEY;
 const shortcode = process.env.SHORTCODE;
 const callbackURL = process.env.CALLBACK_URL;
 
-// 📁 TX Code file path
+// 🧠 In-memory Active Bills
+let activeBills = {}; // { ussdCode: { amount, phone, status, createdAt } }
+
+// 📥 Load TX Codes file (for future upgrade if needed)
 const txFile = path.join(__dirname, 'txcodes.json');
-
-// 🧠 In-memory TX storage
 let txCodes = [];
-
-// 📥 Load TXs from file on startup
 fs.readJson(txFile)
   .then(data => {
     txCodes = data;
-    console.log('✅ Loaded saved TX codes');
+    console.log('✅ Loaded TX codes');
   })
   .catch(() => {
     txCodes = [];
-    console.log('⚠️ No existing TX data found. Starting fresh');
+    console.log('⚠️ No saved TX codes. Starting fresh');
   });
 
 // 💾 Save TXs to file
 function saveTXs() {
   fs.writeJson(txFile, txCodes, { spaces: 2 })
-    .then(() => console.log('💾 TX codes saved to txcodes.json'))
+    .then(() => console.log('💾 TX codes saved'))
     .catch(err => console.error('❌ Failed to save TXs:', err));
 }
-
-// 🏡 Root Route
-app.get('/', (req, res) => {
-  res.send('🚀 Flash Pay API is running!');
-});
-
-// 🔁 Generate TX Code Route
-app.post('/generate', (req, res) => {
-  const { amount, till } = req.body;
-
-  if (!amount || !till) {
-    return res.status(400).json({ error: 'Amount and Till are required' });
-  }
-
-  const txCode = Math.floor(1000 + Math.random() * 9000);
-
-  const newTx = {
-    code: txCode,
-    amount,
-    till,
-    createdAt: new Date(),
-    status: 'pending'
-  };
-
-  txCodes.push(newTx);
-  saveTXs();
-
-  res.json({ message: 'TX code generated', tx: newTx });
-});
-
-// 🔎 View All TX Codes
-app.get('/txcodes', (req, res) => {
-  res.json(txCodes);
-});
 
 // 🔑 Get M-Pesa Access Token
 async function getAccessToken() {
@@ -89,57 +54,116 @@ async function getAccessToken() {
   return response.data.access_token;
 }
 
-// 💳 Manual STK Push
-app.post('/stkpush', async (req, res) => {
-  const { phone, amount } = req.body;
-  if (!phone || !amount) return res.status(400).json({ error: 'Missing phone or amount' });
+// 🏡 Root Route
+app.get('/', (req, res) => {
+  res.send('🚀 Flash Pay API is running!');
+});
+
+// 1. 🛠️ Register Cashier
+app.post('/register-cashier', (req, res) => {
+  const { ussdCode, branchName, cashierName } = req.body;
+  if (!ussdCode || !branchName || !cashierName) {
+    return res.status(400).json({ error: 'Missing registration fields' });
+  }
+  res.json({ message: 'Cashier registered successfully', ussdCode, branchName, cashierName });
+});
+
+// 2. 💸 Send Bill
+app.post('/send-bill', (req, res) => {
+  const { ussdCode, amount } = req.body;
+  if (!ussdCode || !amount) {
+    return res.status(400).json({ error: 'Missing USSD code or amount' });
+  }
+  activeBills[ussdCode] = {
+    amount,
+    status: 'pending',
+    createdAt: new Date()
+  };
+  res.json({ message: 'Bill received', ussdCode, amount });
+});
+
+// 3. 📲 Customer USSD Dial
+app.post('/ussd', async (req, res) => {
+  const { ussdCode, phoneNumber } = req.body;
+  if (!ussdCode || !phoneNumber) {
+    return res.status(400).json({ error: 'Missing USSD code or phone number' });
+  }
+
+  const bill = activeBills[ussdCode];
+
+  if (!bill) {
+    return res.status(404).json({ error: 'No active bill. Wait cashier total.' });
+  }
+  if (bill.status !== 'pending') {
+    return res.status(400).json({ error: 'Bill already handled. Wait for new total.' });
+  }
 
   try {
     const token = await getAccessToken();
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
     const password = Buffer.from(shortcode + passkey + timestamp).toString('base64');
 
-    const payload = {
+    const stkPayload = {
       BusinessShortCode: shortcode,
       Password: password,
       Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
-      Amount: amount,
-      PartyA: phone,
+      Amount: bill.amount,
+      PartyA: phoneNumber,
       PartyB: shortcode,
-      PhoneNumber: phone,
+      PhoneNumber: phoneNumber,
       CallBackURL: callbackURL,
-      AccountReference: 'FlashPayTX',
-      TransactionDesc: 'Manual STK Push'
+      AccountReference: 'FlashPay',
+      TransactionDesc: `Payment via FlashPay ${ussdCode}`
     };
 
-    const response = await axios.post(
-      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
-      payload,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await axios.post('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', stkPayload, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-    res.json({ message: 'STK Push sent', safaricom: response.data });
+    bill.status = 'awaiting_callback';
+    bill.phone = phoneNumber;
+
+    res.json({ message: 'STK push sent. Check your phone.' });
+
   } catch (err) {
-    console.error('❌ STK Push Failed:', err.response?.data || err.message);
-    res.status(500).json({ error: 'STK Push error', details: err.response?.data || err.message });
+    console.error('STK error:', err.message);
+    res.status(500).json({ error: 'STK Push Failed' });
   }
 });
 
-// 📥 Callback Receiver
+// 4. 🛜 Safaricom Callback
 app.post('/callback', (req, res) => {
-  console.log('📥 M-Pesa Callback Received:', JSON.stringify(req.body, null, 2));
-  res.status(200).json({ message: 'Callback processed' });
+  const callbackData = req.body;
+  console.log('📥 Safaricom Callback:', JSON.stringify(callbackData, null, 2));
+  res.status(200).json({ message: 'Callback received' });
 });
-app.post('/ussd', (req, res) => {
-  const { txcode } = req.body;
-  if (!txcode) {
-      return res.status(400).json({ message: 'TX code missing' });
-  }
 
-  // For now just confirm receipt of TX code
-  res.status(200).json({ message: `Received TX code ${txcode}` });
+// 5. 📋 Admin - View Active Bills
+app.get('/admin/active-bills', (req, res) => {
+  res.json(activeBills);
 });
+
+// 6. 🛠️ Admin - Reset Specific Bill
+app.post('/admin/reset-bill', (req, res) => {
+  const { ussdCode } = req.body;
+  if (!ussdCode || !activeBills[ussdCode]) {
+    return res.status(404).json({ error: 'USSD code not found' });
+  }
+  delete activeBills[ussdCode];
+  res.json({ message: 'Bill reset successfully' });
+});
+
+// 7. ⏳ Auto Timeout for Old Bills
+setInterval(() => {
+  const now = new Date();
+  Object.keys(activeBills).forEach(code => {
+    const bill = activeBills[code];
+    if (bill.status === 'pending' && (now - new Date(bill.createdAt)) > 2 * 60 * 1000) {
+      bill.status = 'timeout';
+    }
+  });
+}, 30000); // Run every 30 seconds
 
 // 🔥 Start Server
 app.listen(PORT, '0.0.0.0', () => {
