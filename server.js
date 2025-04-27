@@ -176,12 +176,43 @@ app.post('/ussd', async (req, res) => {
   }
 });
 
-// 4. 🛜 Safaricom Callback
+// 4. 🛜 Safaricom Callback (Upgraded)
 app.post('/callback', (req, res) => {
   const callbackData = req.body;
   console.log('📥 Safaricom Callback:', JSON.stringify(callbackData, null, 2));
-  res.status(200).json({ message: 'Callback received' });
+
+  // Safaricom will send the "CheckoutRequestID" inside Body
+  const resultCode = callbackData.Body?.stkCallback?.ResultCode;
+  const resultDesc = callbackData.Body?.stkCallback?.ResultDesc;
+  const callbackMetadata = callbackData.Body?.stkCallback?.CallbackMetadata;
+
+  if (resultCode === 0 && callbackMetadata) {
+    // Successful payment
+    const phoneNumber = callbackMetadata.Item.find(item => item.Name === 'PhoneNumber')?.Value;
+    const amountPaid = callbackMetadata.Item.find(item => item.Name === 'Amount')?.Value;
+
+    // Find the matching bill
+    const ussdCode = Object.keys(activeBills).find(code => {
+      const bill = activeBills[code];
+      return bill.phone === phoneNumber && bill.status === 'awaiting_callback';
+    });
+
+    if (ussdCode) {
+      activeBills[ussdCode].status = 'paid';
+      activeBills[ussdCode].paidAmount = amountPaid;
+      activeBills[ussdCode].paidAt = new Date();
+
+      console.log(`✅ Payment confirmed for ${ussdCode} (${amountPaid} KES)`);
+    } else {
+      console.log('⚠️ Callback received but no matching pending bill.');
+    }
+  } else {
+    console.log(`⚠️ Payment failed: ${resultDesc}`);
+  }
+
+  res.status(200).json({ message: 'Callback processed' });
 });
+
 
 // 5. 📋 Admin - View Active Bills
 app.get('/admin/active-bills', (req, res) => {
