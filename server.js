@@ -6,13 +6,34 @@ const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
 
-// 🧠 In-memory Active Bills (Fixed Declaration)
+// 🧠 In-memory Active Bills
 let activeBills = {}; // { ussdCode: { amount, phone, status, createdAt } }
+
+// 📁 Cashier Management
+const cashiersFile = path.join(__dirname, 'cashiers.json');
+let cashiers = []; // { branch, cashierId, ussdCode, till }
+
+// Load Cashiers
+fs.readJson(cashiersFile)
+  .then(data => {
+    cashiers = data;
+    console.log('✅ Loaded saved cashiers');
+  })
+  .catch(() => {
+    cashiers = [];
+    console.log('⚠️ No existing cashier data. Starting fresh');
+  });
+
+// Save Cashiers
+function saveCashiers() {
+  fs.writeJson(cashiersFile, cashiers, { spaces: 2 })
+    .then(() => console.log('💾 Cashiers saved'))
+    .catch(err => console.error('❌ Failed to save cashiers:', err));
+}
 
 // 🚀 App Initialization
 const app = express();
 const PORT = process.env.PORT || 10000;
-
 
 // 📁 Middleware
 app.use(cors());
@@ -25,13 +46,7 @@ const passkey = process.env.PASSKEY;
 const shortcode = process.env.SHORTCODE;
 const callbackURL = process.env.CALLBACK_URL;
 
-// 🧠 In-memory Active Bills
-app.get('/admin/active-bills', (req, res) => {
-  res.json(activeBills);
-});
-
-
-// 📥 Load TX Codes file (for future upgrade if needed)
+// 📥 Load TX Codes file (for future)
 const txFile = path.join(__dirname, 'txcodes.json');
 let txCodes = [];
 fs.readJson(txFile)
@@ -68,14 +83,25 @@ app.get('/', (req, res) => {
 
 // 1. 🛠️ Register Cashier
 app.post('/register-cashier', (req, res) => {
-  const { ussdCode, branchName, cashierName } = req.body;
-  if (!ussdCode || !branchName || !cashierName) {
-    return res.status(400).json({ error: 'Missing registration fields' });
+  const { branch, cashierId, ussdCode, till } = req.body;
+
+  if (!branch || !cashierId || !ussdCode || !till) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
-  res.json({ message: 'Cashier registered successfully', ussdCode, branchName, cashierName });
+
+  const exists = cashiers.find(c => c.ussdCode === ussdCode);
+  if (exists) {
+    return res.status(400).json({ error: 'USSD Code already assigned' });
+  }
+
+  const newCashier = { branch, cashierId, ussdCode, till };
+  cashiers.push(newCashier);
+  saveCashiers();
+
+  res.json({ message: 'Cashier registered successfully', cashier: newCashier });
 });
 
-// 🧾 Cashier Sends Bill
+// 2. 🧾 Cashier Sends Bill
 app.post('/pos/send-bill', (req, res) => {
   const { ussdCode, amount } = req.body;
 
@@ -85,11 +111,10 @@ app.post('/pos/send-bill', (req, res) => {
 
   // Check if the USSD already has a pending bill
   if (activeBills[ussdCode] && activeBills[ussdCode].status === 'pending') {
-    // If already a pending bill, mark it as "other_payment" (overwritten)
     activeBills[ussdCode].status = 'other_payment';
   }
 
-  // Save the new bill
+  // Save new bill
   activeBills[ussdCode] = {
     amount,
     phone: null,
@@ -102,7 +127,6 @@ app.post('/pos/send-bill', (req, res) => {
   res.json({ message: 'Bill received', bill: activeBills[ussdCode] });
 });
 
-
 // 3. 📲 Customer USSD Dial
 app.post('/ussd', async (req, res) => {
   const { ussdCode, phoneNumber } = req.body;
@@ -111,7 +135,6 @@ app.post('/ussd', async (req, res) => {
   }
 
   const bill = activeBills[ussdCode];
-
   if (!bill) {
     return res.status(404).json({ error: 'No active bill. Wait cashier total.' });
   }
@@ -184,13 +207,14 @@ setInterval(() => {
       bill.status = 'timeout';
     }
   });
-}, 30000); // Run every 30 seconds
+}, 30000); // every 30 sec
 
+// 🌍 Keep Server Alive (self-ping)
 setInterval(() => {
   axios.get('https://flashpay-backend-svkk.onrender.com/')
     .then(() => console.log('🚀 Self-ping successful'))
     .catch((err) => console.error('⚠️ Self-ping failed:', err.message));
-}, 1000 * 60 * 4); // every 4 minutes
+}, 1000 * 60 * 4); // every 4 min
 
 // 🔥 Start Server
 app.listen(PORT, '0.0.0.0', () => {
