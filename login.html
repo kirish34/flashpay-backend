@@ -37,7 +37,7 @@
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Login</button>
-    <div id="message"></div>
+    <div id="message" style="margin-top:10px; color: red;"></div>
   </div>
 
   <script>
@@ -47,27 +47,26 @@
       const message = document.getElementById('message');
 
       try {
-        const res = await fetch('/login', {
+        const res = await fetch('https://flashpay-backend-swkk.onrender.com/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
         const data = await res.json();
         if (data.success) {
-          message.innerHTML = "✅ Login successful!";
-          // Redirect based on role
-          if (data.role === 'admin') {
+          message.style.color = "green";
+          message.innerHTML = "✅ Login successful! Redirecting...";
+          // Redirect after 1 second
+          setTimeout(() => {
             window.location.href = '/admin.html';
-          } else if (data.role === 'branch_manager') {
-            window.location.href = '/branch.html';
-          } else {
-            window.location.href = '/cashier.html';
-          }
+          }, 1000);
         } else {
+          message.style.color = "red";
           message.innerHTML = "❌ Invalid login. Try again.";
         }
       } catch (err) {
         console.error(err);
+        message.style.color = "red";
         message.innerHTML = "❌ Error connecting to server.";
       }
     }
