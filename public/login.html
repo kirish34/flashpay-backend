@@ -28,38 +28,51 @@
       background: #4CAF50;
       color: white;
       border: none;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h2>Flash Pay Login</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
+    <input type="text" id="username" placeholder="Username" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button id="login-button">Login</button>
     <div id="message" style="margin-top:10px; color: red;"></div>
   </div>
 
   <script>
-    async function login() {
+    document.getElementById('login-button').addEventListener('click', async function() {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value.trim();
       const message = document.getElementById('message');
 
+      if (!username || !password) {
+        message.innerHTML = "❌ Please enter both username and password.";
+        return;
+      }
+
       try {
-        const res = await fetch('https://flashpay-backend-swkk.onrender.com/login', {
+        const res = await fetch('/login', {  // ✅ Make it relative
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
+
         const data = await res.json();
         if (data.success) {
           message.style.color = "green";
           message.innerHTML = "✅ Login successful! Redirecting...";
-          // Redirect after 1 second
+
+          // 🎯 Redirect after short delay
           setTimeout(() => {
-            window.location.href = '/admin.html';
+            if (data.role === 'admin') {
+              window.location.href = '/admin';
+            } else {
+              window.location.href = '/dashboard';
+            }
           }, 1000);
+
         } else {
           message.style.color = "red";
           message.innerHTML = "❌ Invalid login. Try again.";
@@ -69,7 +82,7 @@
         message.style.color = "red";
         message.innerHTML = "❌ Error connecting to server.";
       }
-    }
+    });
   </script>
 </body>
 </html>

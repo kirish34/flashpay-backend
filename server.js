@@ -18,7 +18,6 @@ fs.readJson(usersFile)
     console.log('⚠️ No users found. Start fresh.');
   });
 
-
 // 🧠 In-memory Active Bills
 let activeBills = {}; // { ussdCode: { amount, phone, status, createdAt } }
 
@@ -51,6 +50,9 @@ const PORT = process.env.PORT || 10000;
 // 📁 Middleware
 app.use(cors());
 app.use(express.json());
+
+// 🆕 Serve Static Files (public folder)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 🔐 Safaricom Daraja Credentials
 const consumerKey = process.env.CONSUMER_KEY;
@@ -92,6 +94,31 @@ async function getAccessToken() {
 // 🏡 Root Route
 app.get('/', (req, res) => {
   res.send('🚀 Flash Pay API is running!');
+});
+
+// 🔥 New Friendly Routes for Frontend Pages
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.get('/branch-dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'branch-dashboard.html'));
+});
+
+app.get('/pos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pos.html'));
+});
+
+app.get('/ussd-simulator', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'ussd-simulator.html'));
 });
 
 // 🔒 Login Endpoint
@@ -206,17 +233,14 @@ app.post('/callback', (req, res) => {
   const callbackData = req.body;
   console.log('📥 Safaricom Callback:', JSON.stringify(callbackData, null, 2));
 
-  // Safaricom will send the "CheckoutRequestID" inside Body
   const resultCode = callbackData.Body?.stkCallback?.ResultCode;
   const resultDesc = callbackData.Body?.stkCallback?.ResultDesc;
   const callbackMetadata = callbackData.Body?.stkCallback?.CallbackMetadata;
 
   if (resultCode === 0 && callbackMetadata) {
-    // Successful payment
     const phoneNumber = callbackMetadata.Item.find(item => item.Name === 'PhoneNumber')?.Value;
     const amountPaid = callbackMetadata.Item.find(item => item.Name === 'Amount')?.Value;
 
-    // Find the matching bill
     const ussdCode = Object.keys(activeBills).find(code => {
       const bill = activeBills[code];
       return bill.phone === phoneNumber && bill.status === 'awaiting_callback';
@@ -237,7 +261,6 @@ app.post('/callback', (req, res) => {
 
   res.status(200).json({ message: 'Callback processed' });
 });
-
 
 // 5. 📋 Admin - View Active Bills
 app.get('/admin/active-bills', (req, res) => {
@@ -263,14 +286,14 @@ setInterval(() => {
       bill.status = 'timeout';
     }
   });
-}, 30000); // every 30 sec
+}, 30000);
 
 // 🌍 Keep Server Alive (self-ping)
 setInterval(() => {
   axios.get('https://flashpay-backend-svkk.onrender.com/')
     .then(() => console.log('🚀 Self-ping successful'))
     .catch((err) => console.error('⚠️ Self-ping failed:', err.message));
-}, 1000 * 60 * 4); // every 4 min
+}, 1000 * 60 * 4);
 
 // 🔥 Start Server
 app.listen(PORT, '0.0.0.0', () => {
