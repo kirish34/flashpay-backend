@@ -5,6 +5,19 @@ const cors = require('cors');
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
+const usersFile = path.join(__dirname, 'users.json');
+let users = [];
+
+// 📥 Load Users
+fs.readJson(usersFile)
+  .then(data => {
+    users = data;
+    console.log('✅ Loaded users');
+  })
+  .catch(() => {
+    console.log('⚠️ No users found. Start fresh.');
+  });
+
 
 // 🧠 In-memory Active Bills
 let activeBills = {}; // { ussdCode: { amount, phone, status, createdAt } }
@@ -79,6 +92,18 @@ async function getAccessToken() {
 // 🏡 Root Route
 app.get('/', (req, res) => {
   res.send('🚀 Flash Pay API is running!');
+});
+
+// 🔒 Login Endpoint
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const user = users.find(u => u.username === username && u.password === password);
+
+  if (user) {
+    res.json({ success: true, role: user.role });
+  } else {
+    res.status(401).json({ success: false, message: 'Invalid credentials' });
+  }
 });
 
 // 1. 🛠️ Register Cashier
