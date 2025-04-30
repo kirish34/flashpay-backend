@@ -245,6 +245,22 @@ app.post('/admin/reset-bill', (req, res) => {
   res.json({ message: 'Bill reset successfully' });
 });
 
+// ✅ Branch: View Transactions
+app.get('/api/branch/transactions/:branchName', (req, res) => {
+  const { branchName } = req.params;
+  const branchCashiers = cashiers.filter(c => c.branch === branchName);
+  const branchUssdCodes = branchCashiers.map(c => c.ussdCode);
+
+  const transactions = Object.entries(activeBills)
+    .filter(([code]) => branchUssdCodes.includes(code))
+    .map(([ussdCode, bill]) => ({
+      ussdCode,
+      ...bill
+    }));
+
+  res.json(transactions);
+});
+
 // ⏳ Timeout Old Bills
 setInterval(() => {
   const now = new Date();

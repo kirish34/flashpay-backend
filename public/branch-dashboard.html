@@ -33,7 +33,7 @@
       color: white;
     }
 
-    .status-waiting {
+    .status-pending {
       color: orange;
     }
 
@@ -41,7 +41,7 @@
       color: green;
     }
 
-    .status-timeout {
+    .status-timeout, .status-other_payment {
       color: red;
     }
 
@@ -69,11 +69,10 @@
   <table>
     <thead>
       <tr>
-        <th>Cashier ID</th>
         <th>USSD Code</th>
         <th>Amount (KES)</th>
         <th>Status</th>
-        <th>Till Number</th>
+        <th>Phone</th>
         <th>Created At</th>
       </tr>
     </thead>
@@ -83,37 +82,44 @@
   </table>
 
   <script>
+    const branchName = "Naivas OTC";
+
     async function loadTransactions() {
       try {
-        const res = await fetch('/api/branch-transactions?branch=Naivas OTC');
+        const res = await fetch(`/api/branch/transactions/${encodeURIComponent(branchName)}`);
         const data = await res.json();
-
         const body = document.getElementById('transactionBody');
         body.innerHTML = '';
 
+        if (!data.length) {
+          const row = document.createElement('tr');
+          const cell = document.createElement('td');
+          cell.colSpan = 5;
+          cell.textContent = "No transactions found.";
+          row.appendChild(cell);
+          body.appendChild(row);
+          return;
+        }
+
         data.forEach(tx => {
           const row = document.createElement('tr');
-
           row.innerHTML = `
-            <td>${tx.cashierId}</td>
-            <td>*123*${tx.cashierId}${tx.checksum}#</td>
+            <td>${tx.ussdCode}</td>
             <td>${tx.amount}</td>
             <td class="status-${tx.status.toLowerCase()}">${tx.status}</td>
-            <td>${tx.tillNumber}</td>
-            <td>${new Date(tx.createdAt).toLocaleTimeString()}</td>
+            <td>${tx.phone || '-'}</td>
+            <td>${new Date(tx.createdAt).toLocaleString()}</td>
           `;
-
           body.appendChild(row);
         });
-
       } catch (err) {
         alert('❌ Failed to fetch branch transactions');
         console.error(err);
       }
     }
 
-    loadTransactions(); // initial load
-    setInterval(loadTransactions, 5000); // auto-refresh every 5s
+    loadTransactions();
+    setInterval(loadTransactions, 10000);
   </script>
 </body>
 </html>
