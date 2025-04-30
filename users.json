@@ -3,5 +3,11 @@
     "username": "skyadmin",
     "password": "flashpay123",
     "role": "admin"
+  },
+  {
+    "username": "naivasotc",
+    "password": "otcbranch123",
+    "role": "branch_manager",
+    "branch": "Naivas OTC"
   }
 ]
