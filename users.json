@@ -1,7 +1,7 @@
 [
-    {
-      "username": "skyadmin",
-      "password": "flashpay123"
-    }
-  ]
-  
+  {
+    "username": "skyadmin",
+    "password": "flashpay123",
+    "role": "admin"
+  }
+]
