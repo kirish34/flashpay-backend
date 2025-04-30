@@ -12,23 +12,42 @@
       justify-content: center;
       align-items: center;
     }
+
     .login-container {
       background: #fff;
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      width: 300px;
     }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
     input, button {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
       font-size: 16px;
     }
+
     button {
       background: #4CAF50;
       color: white;
       border: none;
       cursor: pointer;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    #message {
+      margin-top: 10px;
+      color: red;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -38,49 +57,49 @@
     <input type="text" id="username" placeholder="Username" required />
     <input type="password" id="password" placeholder="Password" required />
     <button id="login-button">Login</button>
-    <div id="message" style="margin-top:10px; color: red;"></div>
+    <div id="message"></div>
   </div>
 
   <script>
-    document.getElementById('login-button').addEventListener('click', async function() {
+    document.getElementById('login-button').addEventListener('click', async function () {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value.trim();
       const message = document.getElementById('message');
 
       if (!username || !password) {
-        message.innerHTML = "❌ Please enter both username and password.";
+        message.textContent = "❌ Please enter both username and password.";
         return;
       }
 
       try {
-        const res = await fetch('/login', {  // ✅ Make it relative
+        const res = await fetch('/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
 
         const data = await res.json();
+
         if (data.success) {
           message.style.color = "green";
-          message.innerHTML = "✅ Login successful! Redirecting...";
+          message.textContent = "✅ Login successful! Redirecting...";
 
-          // 🎯 Redirect after short delay
           setTimeout(() => {
             if (data.role === 'admin') {
               window.location.href = '/admin';
             } else {
-              window.location.href = '/dashboard';
+              window.location.href = '/branch-dashboard';
             }
           }, 1000);
 
         } else {
           message.style.color = "red";
-          message.innerHTML = "❌ Invalid login. Try again.";
+          message.textContent = "❌ Invalid login. Try again.";
         }
       } catch (err) {
         console.error(err);
         message.style.color = "red";
-        message.innerHTML = "❌ Error connecting to server.";
+        message.textContent = "❌ Error connecting to server.";
       }
     });
   </script>
