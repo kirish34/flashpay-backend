@@ -129,33 +129,38 @@
 
         const container = document.getElementById('branches');
         container.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Branch</th>
-                <th>Till</th>
-                <th>Total TX</th>
-                <th>Paid</th>
-                <th>Waiting</th>
-                <th>Failed</th>
-                <th>Active Cashiers</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${branches.map(branch => `
-                <tr>
-                  <td>${branch.name}</td>
-                  <td>${branch.tillNumber}</td>
-                  <td>${branch.totalTransactions}</td>
-                  <td class="status-paid">${branch.paid}</td>
-                  <td class="status-waiting">${branch.waiting}</td>
-                  <td class="status-failed">${branch.failed}</td>
-                  <td>${branch.activeCashiers}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        `;
+  <table>
+    <thead>
+      <tr>
+        <th>Branch</th>
+        <th>Till</th>
+        <th>Total TX</th>
+        <th>Paid</th>
+        <th>Waiting</th>
+        <th>Failed</th>
+        <th>Active Cashiers</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${branches.map(branch => `
+        <tr>
+          <td><input value="${branch.name}" onchange="editBranch('${branch.name}', this.value, 'name')"/></td>
+          <td><input value="${branch.tillNumber}" onchange="editBranch('${branch.name}', this.value, 'till')"/></td>
+          <td>${branch.totalTransactions}</td>
+          <td class="status-paid">${branch.paid}</td>
+          <td class="status-waiting">${branch.waiting}</td>
+          <td class="status-failed">${branch.failed}</td>
+          <td>${branch.activeCashiers}</td>
+          <td>
+            <button onclick="deleteBranch('${branch.name}')">🗑️ Delete</button>
+          </td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+`;
+
       } catch (err) {
         alert('Failed to load branch stats');
         console.error(err);
@@ -213,5 +218,32 @@
     populateBranches();
     setInterval(loadBranchStats, 7000);
   </script>
+  <script>
+    async function editBranch(originalName, newValue, field) {
+      const res = await fetch('/api/admin/edit-branch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ originalName, newValue, field })
+      });
+      const result = await res.json();
+      alert(result.message);
+      loadBranchStats();
+      populateBranches();
+    }
+  
+    async function deleteBranch(branchName) {
+      if (!confirm(`Are you sure you want to delete branch: ${branchName}?`)) return;
+      const res = await fetch('/api/admin/delete-branch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name: branchName })
+      });
+      const result = await res.json();
+      alert(result.message);
+      loadBranchStats();
+      populateBranches();
+    }
+  </script>
+  
 </body>
 </html>

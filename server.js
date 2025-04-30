@@ -80,6 +80,36 @@ app.post('/api/admin/register-branch', (req, res) => {
   res.json({ message: 'Branch registered successfully', branch: newBranch });
 });
 
+app.post('/api/admin/edit-branch', (req, res) => {
+  const { originalName, newValue, field } = req.body;
+  const branch = branches.find(b => b.name === originalName);
+  if (!branch) return res.status(404).json({ message: 'Branch not found' });
+
+  if (field === 'name') {
+    const duplicate = branches.find(b => b.name === newValue);
+    if (duplicate) return res.status(400).json({ message: 'Branch name already exists' });
+
+    // Update cashier records too
+    cashiers.forEach(c => {
+      if (c.branch === originalName) c.branch = newValue;
+    });
+
+    branch.name = newValue;
+  }
+
+  if (field === 'till') {
+    branch.tillNumber = newValue;
+    cashiers.forEach(c => {
+      if (c.branch === branch.name) c.till = newValue;
+    });
+  }
+
+  saveBranches();
+  saveCashiers();
+
+  res.json({ message: 'Branch updated successfully' });
+});
+
 // ✅ ADMIN: Register Cashier
 app.post('/api/admin/register-cashier', (req, res) => {
   const { branch, cashierId, ussdCode } = req.body;
