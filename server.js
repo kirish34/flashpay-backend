@@ -236,16 +236,28 @@ app.post('/ussd', async (req, res) => {
   }
 });
 
-// ✅ Safaricom Callback
+// ✅ Safaricom Callback Handler
 app.post('/callback', (req, res) => {
+  console.log("📞 Callback received from Safaricom");
+
   const data = req.body;
   const resultCode = data.Body?.stkCallback?.ResultCode;
   const callbackMetadata = data.Body?.stkCallback?.CallbackMetadata;
 
-  if (resultCode === 0 && callbackMetadata) {
-    const phone = callbackMetadata.Item.find(i => i.Name === 'PhoneNumber')?.Value;
-    const amountPaid = callbackMetadata.Item.find(i => i.Name === 'Amount')?.Value;
+  if (!callbackMetadata) {
+    console.warn("⚠️ Missing CallbackMetadata in response");
+    return res.status(400).json({ message: 'No metadata' });
+  }
 
+  const phone = callbackMetadata.Item.find(i => i.Name === 'PhoneNumber')?.Value?.toString();
+  const amountPaid = callbackMetadata.Item.find(i => i.Name === 'Amount')?.Value;
+
+  console.log("📲 Phone:", phone);
+  console.log("💰 Amount:", amountPaid);
+  console.log("✅ Result Code:", resultCode);
+
+  if (resultCode === 0) {
+    // ✅ FlashPay Update
     const ussdCode = Object.keys(activeBills).find(code => {
       const bill = activeBills[code];
       return bill.phone === phone && bill.status === 'awaiting_callback';
@@ -255,12 +267,47 @@ app.post('/callback', (req, res) => {
       activeBills[ussdCode].status = 'paid';
       activeBills[ussdCode].paidAmount = amountPaid;
       activeBills[ussdCode].paidAt = new Date();
-      console.log(`✅ Payment confirmed for ${ussdCode} (${amountPaid} KES)`);
+      console.log(`✅ FlashPay updated for ${ussdCode}`);
     }
+
+    // ✅ TekeTeke Update
+    const teketekeTxPath = path.join(__dirname, 'teketeke_tx.json');
+    fs.readJson(teketekeTxPath)
+      .then(logs => {
+        const matching = logs
+          .map((tx, index) => ({ ...tx, index }))
+          .filter(tx => String(tx.phone) === String(phone) && tx.status === 'initiated')
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        if (matching.length === 0) {
+          console.warn("⚠️ No 'initiated' TekeTeke TX found for phone:", phone);
+          return;
+        }
+
+        const latestTx = matching[0];
+        logs[latestTx.index].status = 'paid';
+        logs[latestTx.index].amountPaid = amountPaid;
+        logs[latestTx.index].paidAt = new Date().toISOString();
+
+        console.log(`✅ Updated TekeTeke TX at index ${latestTx.index}`);
+        console.log("📦", logs[latestTx.index]);
+
+        return fs.writeJson(teketekeTxPath, logs, { spaces: 2 });
+      })
+      .then(() => {
+        console.log(`✅ TekeTeke transaction write complete for phone ${phone}`);
+      })
+      .catch(err => {
+        console.error("❌ Error updating TekeTeke TX:", err.message);
+      });
+
+  } else {
+    console.warn("❌ STK failed or cancelled. ResultCode:", resultCode);
   }
 
   res.status(200).json({ message: 'Callback processed' });
 });
+
 
 // ✅ Admin: View Active Bills
 app.get('/admin/active-bills', (req, res) => {
@@ -308,6 +355,102 @@ setInterval(() => {
     .then(() => console.log('🚀 Self-ping successful'))
     .catch((err) => console.error('⚠️ Self-ping failed:', err.message));
 }, 1000 * 60 * 4);
+// ✅ TekeTeke: Customer pays matatu fare via USSD format *123*matatuCode*amount#
+app.post('/teketeke/ussd', async (req, res) => {
+  const { matatuCode, amount, phoneNumber } = req.body;
+  if (!matatuCode || !amount || !phoneNumber) {
+    return res.status(400).json({ error: 'Missing matatuCode, amount or phoneNumber' });
+  }
+
+  try {
+    const matatusPath = path.join(__dirname, 'matatus.json');
+    const matatus = await fs.readJson(matatusPath).catch(() => []);
+    const matatu = matatus.find(m => m.code === matatuCode && m.status === 'active');
+
+    if (!matatu) {
+      return res.status(404).json({ error: 'Matatu not found or inactive' });
+    }
+
+    // Auth & Token
+    const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
+    const { data } = await axios.get('https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', {
+      headers: { Authorization: `Basic ${auth}` }
+    });
+
+    const token = data.access_token;
+    const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+    const password = Buffer.from(shortcode + passkey + timestamp).toString('base64');
+
+    const stkPayload = {
+      BusinessShortCode: shortcode,
+      Password: password,
+      Timestamp: timestamp,
+      TransactionType: 'CustomerPayBillOnline',
+      Amount: amount,
+      PartyA: phoneNumber,
+      PartyB: matatu.tillNumber,
+      PhoneNumber: phoneNumber,
+      CallBackURL: callbackURL,
+      AccountReference: 'TekeTeke',
+      TransactionDesc: `Fare payment to matatu ${matatuCode}`
+    };
+
+    // ✅ STK Push
+    await axios.post('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', stkPayload, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    // ✅ Save to JSON if STK was triggered
+    const transaction = {
+      matatuCode,
+      amount,
+      tillNumber: matatu.tillNumber,
+      phone: phoneNumber,
+      status: 'initiated',
+      timestamp: new Date().toISOString()
+    };
+
+    const teketekeTxPath = path.join(__dirname, 'teketeke_tx.json');
+    const txLog = await fs.readJson(teketekeTxPath).catch(() => []);
+    txLog.push(transaction);
+    await fs.writeJson(teketekeTxPath, txLog, { spaces: 2 });
+
+    res.json({ message: 'STK push sent for fare payment. Check your phone.' });
+
+  } catch (err) {
+    console.error('TekeTeke error:', err.message);
+    res.status(500).json({ error: 'Fare payment failed' });
+  }
+});
+
+// ✅ SACCO Dashboard: View fare transactions
+app.get('/api/sacco/:saccoName/fare-transactions', async (req, res) => {
+  const { saccoName } = req.params;
+
+  try {
+    const matatusPath = path.join(__dirname, 'matatus.json');
+    const txPath = path.join(__dirname, 'teketeke_tx.json');
+
+    const matatus = await fs.readJson(matatusPath).catch(() => []);
+    const transactions = await fs.readJson(txPath).catch(() => []);
+
+    const saccoMatatus = matatus.filter(m => m.sacco === saccoName);
+    const matatuCodes = saccoMatatus.map(m => m.code);
+
+    const saccoTransactions = transactions.filter(tx => matatuCodes.includes(tx.matatuCode));
+
+    res.json({
+      sacco: saccoName,
+      matatus: saccoMatatus.length,
+      transactions: saccoTransactions.length,
+      records: saccoTransactions
+    });
+
+  } catch (err) {
+    console.error("Sacco dashboard error:", err.message);
+    res.status(500).json({ error: 'Failed to load transactions' });
+  }
+});
 
 // ✅ Start Server
 app.listen(PORT, '0.0.0.0', () => {

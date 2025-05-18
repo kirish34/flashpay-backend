@@ -1,0 +1,27 @@
+[
+    {
+      "code": "2345",
+      "plate": "KDA 456A",
+      "route": "CBD–Kawangware",
+      "sacco": "CityLink",
+      "tillNumber": "174379",
+      "status": "active"
+    },
+    {
+      "code": "5678",
+      "plate": "KBX 789B",
+      "route": "CBD–Donholm",
+      "sacco": "CityLink",
+      "tillNumber": "5289722",
+      "status": "active"
+    },
+    {
+      "code": "8910",
+      "plate": "KCU 112C",
+      "route": "CBD–Umoja",
+      "sacco": "EastCom",
+      "tillNumber": "5289733",
+      "status": "active"
+    }
+  ]
+  

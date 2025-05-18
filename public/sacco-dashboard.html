@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SACCO Dashboard – TekeTeke</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    h2 {
+      color: #444;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>SACCO Fare Dashboard</h2>
+
+  <label for="saccoName">Enter SACCO Name:</label><br>
+  <input type="text" id="saccoName" placeholder="e.g. CityLink" />
+  <button onclick="loadDashboard()">Load Transactions</button>
+
+  <div id="summary"></div>
+  <table id="resultsTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Matatu Code</th>
+        <th>Amount (KES)</th>
+        <th>Phone</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadDashboard() {
+      const saccoName = document.getElementById('saccoName').value;
+      if (!saccoName) {
+        alert("Please enter SACCO name.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/sacco/${saccoName}/fare-transactions`);
+        const data = await res.json();
+
+        const summaryDiv = document.getElementById("summary");
+        const table = document.getElementById("resultsTable");
+        const tbody = table.querySelector("tbody");
+
+        if (data.records.length === 0) {
+          summaryDiv.innerHTML = `<p>No transactions found for SACCO: <strong>${saccoName}</strong></p>`;
+          table.style.display = "none";
+          return;
+        }
+
+        summaryDiv.innerHTML = `
+          <p><strong>SACCO:</strong> ${data.sacco}</p>
+          <p><strong>Matatus:</strong> ${data.matatus}</p>
+          <p><strong>Total Transactions:</strong> ${data.transactions}</p>
+        `;
+
+        tbody.innerHTML = "";
+        data.records.forEach(tx => {
+          const row = `
+            <tr>
+              <td>${tx.matatuCode}</td>
+              <td>${tx.amount}</td>
+              <td>${tx.phone}</td>
+              <td>${tx.status}</td>
+              <td>${new Date(tx.timestamp).toLocaleString()}</td>
+            </tr>`;
+          tbody.innerHTML += row;
+        });
+
+        table.style.display = "table";
+      } catch (err) {
+        alert("Failed to load transactions.");
+        console.error(err);
+      }
+    }
+  </script>
+
+</body>
+</html>
