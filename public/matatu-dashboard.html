@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Matatu Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f0f0f0;
+    }
+    h1 {
+      color: #4CAF50;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background: #4CAF50;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Matatu Dashboard</h1>
+  <table id="txTable">
+    <thead>
+      <tr>
+        <th>Matatu Code</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Paid At</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const matatuCode = '2345'; // Replace with logged-in matatu code
+    fetch('/api/sacco/CityLink/fare-transactions') // You can customize endpoint later
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector('#txTable tbody');
+        const filtered = data.records.filter(tx => tx.matatuCode === matatuCode);
+        filtered.forEach(tx => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${tx.matatuCode}</td>
+            <td>${tx.amountPaid || tx.amount}</td>
+            <td>${tx.status}</td>
+            <td>${tx.paidAt || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+  </script>
+</body>
+</html>

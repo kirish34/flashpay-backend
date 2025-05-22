@@ -1,13 +1,5 @@
 [
-  {
-    "username": "skyadmin",
-    "password": "flashpay123",
-    "role": "admin"
-  },
-  {
-    "username": "naivasotc",
-    "password": "otcbranch123",
-    "role": "branch_manager",
-    "branch": "Naivas OTC"
-  }
+  { "username": "admin", "password": "1234", "role": "supermarket" },
+  { "username": "citylink", "password": "city123", "role": "sacco" },
+  { "username": "matatu123", "password": "matpass", "role": "matatu" }
 ]

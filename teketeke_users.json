@@ -1,0 +1,12 @@
+[
+  {
+    "role": "sacco",
+    "username": "citylink",
+    "password": "1234"
+  },
+  {
+    "role": "matatu",
+    "username": "matatu2345",
+    "password": "5678"
+  }
+]
