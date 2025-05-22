@@ -61,9 +61,18 @@ app.get('/ussd-simulator', (_, res) => res.sendFile(path.join(__dirname, 'public
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username && u.password === password);
-  if (user) return res.json({ success: true, role: user.role });
-  res.status(401).json({ success: false, message: 'Invalid credentials' });
+  if (!user) {
+    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+  }
+
+  return res.json({
+    success: true,
+    role: user.role,
+    saccoName: user.saccoName || null,
+    matatuCode: user.matatuCode || null
+  });
 });
+
 
 // ✅ ADMIN: Register Branch
 app.post('/api/admin/register-branch', (req, res) => {

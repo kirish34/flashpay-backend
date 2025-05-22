@@ -2,90 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>TekeTeke Admin Login</title>
+  <title>Sacco Dashboard</title>
   <style>
     body {
-      background: #f5f5f5;
       font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .login-container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      width: 300px;
+      padding: 20px;
     }
     h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-size: 24px;
-      text-align: center;
+      color: #333;
     }
-    input, select, button {
+    table {
+      border-collapse: collapse;
       width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
       padding: 10px;
-      margin-top: 10px;
-      font-size: 16px;
-      border-radius: 5px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .stats {
+      margin-top: 20px;
+      background: #f9f9f9;
+      padding: 10px;
       border: 1px solid #ccc;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .error {
-      color: red;
-      text-align: center;
-      margin-top: 10px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
-<div class="login-container">
-  <h2>TekeTeke Admin Login</h2>
-  <select id="userRole">
-    <option value="">Select Role</option>
-    <option value="sacco">SACCO</option>
-    <option value="matatu">Matatu</option>
-  </select>
-  <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
-  <button onclick="handleLogin()">Login</button>
-  <div id="errorBox" class="error"></div>
-</div>
+<h2 id="title">Sacco Dashboard</h2>
+<div class="stats" id="statsBox"></div>
+<table id="recordsTable">
+  <thead>
+    <tr>
+      <th>Matatu</th>
+      <th>Amount</th>
+      <th>Phone</th>
+      <th>Status</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
-  function handleLogin() {
-    const role = document.getElementById('userRole').value;
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+  const urlParams = new URLSearchParams(window.location.search);
+  const sacco = urlParams.get('sacco');
 
-    if (!role || !username || !password) {
-      document.getElementById('errorBox').textContent = 'All fields are required';
-      return;
-    }
+  document.getElementById("title").textContent = `Sacco Dashboard - ${sacco}`;
 
-    // Simulate login
-    if (username === 'admin' && password === '1234') {
-      if (role === 'sacco') {
-        window.location.href = '/sacco-dashboard.html';
-      } else if (role === 'matatu') {
-        window.location.href = '/matatu-dashboard.html';
-      }
-    } else {
-      document.getElementById('errorBox').textContent = 'Invalid credentials';
-    }
-  }
+  fetch(`/api/sacco/${sacco}/fare-transactions`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#recordsTable tbody");
+      const stats = `
+        <strong>SACCO:</strong> ${data.sacco} | 
+        <strong>Total Matatus:</strong> ${data.matatus} | 
+        <strong>Total Transactions:</strong> ${data.transactions}
+      `;
+      document.getElementById("statsBox").innerHTML = stats;
+
+      data.records.forEach(tx => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${tx.matatuCode}</td>
+          <td>${tx.amount}</td>
+          <td>${tx.phone}</td>
+          <td>${tx.status}</td>
+          <td>${new Date(tx.timestamp).toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    })
+    .catch(err => {
+      document.getElementById("statsBox").textContent = "Failed to load transactions.";
+      console.error(err);
+    });
 </script>
 </body>
 </html>
