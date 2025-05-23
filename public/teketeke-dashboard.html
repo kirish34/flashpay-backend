@@ -107,7 +107,7 @@
   let allMatatus = [];
   let allSaccos = [];
 
-  fetch('https://flashpay-backend-swkk.onrender.com/api/teketeke/all-transactions')
+  fetch('/api/teketeke/all-transactions')
     .then(res => res.json())
     .then(data => {
       transactions = data.records;
