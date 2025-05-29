@@ -38,12 +38,15 @@
       cursor: pointer;
       border-radius: 4px;
     }
+    .section {
+      margin-top: 40px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 40px;
       background: white;
       box-shadow: 0 0 10px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
     }
     th, td {
       padding: 12px;
@@ -66,12 +69,13 @@
     <h3>Add Sacco</h3>
     <input type="text" id="saccoName" placeholder="Sacco Name" required>
     <input type="text" id="saccoContact" placeholder="Sacco Contact" required>
-    <input type="text" id="saccoLicence" placeholder="Licence Number" required>
+    <input type="text" id="saccoLicence" placeholder="Licence Email/Number" required>
+    <input type="text" id="saccoTill" placeholder="Sacco Till Number" required>
     <input type="submit" value="Add Sacco">
   </form>
 
   <form id="addMatatuForm">
-    <h3>Add Matatu</h3>
+    <h3>Add Matatu to Sacco</h3>
     <input type="text" id="matatuCode" placeholder="Matatu Code" required>
     <input type="text" id="matatuSacco" placeholder="Sacco Name" required>
     <input type="text" id="matatuPlate" placeholder="Plate Number" required>
@@ -82,38 +86,52 @@
     <input type="submit" value="Add Matatu">
   </form>
 
-  <table id="txTable">
-    <thead>
-      <tr>
-        <th>Matatu Code</th>
-        <th>Sacco</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Phone</th>
-        <th>Paid At</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="section">
+    <h3>Active Matatus (used USSD in last 2 months)</h3>
+    <table id="activeTable">
+      <thead>
+        <tr>
+          <th>Matatu Code</th><th>Sacco</th><th>Phone</th><th>Status</th><th>Paid At</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-  <script>
-    fetch('/api/teketeke/all-transactions')
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.querySelector('#txTable tbody');
-        data.records.forEach(tx => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${tx.matatuCode}</td>
-            <td>${tx.sacco || '-'}</td>
-            <td>${tx.amountPaid || tx.amount}</td>
-            <td>${tx.status}</td>
-            <td>${tx.phone}</td>
-            <td>${tx.paidAt || '-'}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+  <div class="section">
+    <h3>Inactive Matatus (no USSD in over 2 months)</h3>
+    <table id="inactiveTable">
+      <thead>
+        <tr>
+          <th>Matatu Code</th><th>Sacco</th><th>Phone</th><th>Status</th><th>Paid At</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+  fetch('/api/teketeke/all-transactions')
+    .then(res => res.json())
+    .then(data => {
+      const now = new Date();
+      const activeTbody = document.querySelector('#activeTable tbody');
+      const inactiveTbody = document.querySelector('#inactiveTable tbody');
+
+      data.records.forEach(tx => {
+        const paidAt = tx.paidAt ? new Date(tx.paidAt) : null;
+        const isActive = paidAt && (now - paidAt < 60 * 24 * 60 * 60 * 1000); // 60 days
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${tx.matatuCode}</td>
+          <td>${tx.sacco || '-'}</td>
+          <td>${tx.phone}</td>
+          <td>${tx.status}</td>
+          <td>${tx.paidAt || '-'}</td>
+        `;
+        (isActive ? activeTbody : inactiveTbody).appendChild(tr);
       });
-  </script>
+    });
+</script>
 </body>
 </html>
