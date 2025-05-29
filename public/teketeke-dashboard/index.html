@@ -23,7 +23,7 @@
       margin-bottom: 10px;
       color: #1976d2;
     }
-    input[type="text"] {
+    input[type="text"], input[type="password"] {
       width: 100%;
       padding: 10px;
       margin-bottom: 10px;
@@ -60,78 +60,150 @@
     tr:hover {
       background-color: #f0f8ff;
     }
+    .action-btn {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      margin-left: 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .edit-btn {
+      background-color: #ff9800;
+    }
   </style>
 </head>
 <body>
   <h1>TekeTeke Admin Dashboard</h1>
 
-  <form id="addSaccoForm">
-    <h3>Add Sacco</h3>
-    <input type="text" id="saccoName" placeholder="Sacco Name" required>
-    <input type="text" id="saccoContact" placeholder="Sacco Contact" required>
-    <input type="text" id="saccoLicence" placeholder="Licence Email/Number" required>
-    <input type="text" id="saccoTill" placeholder="Sacco Till Number" required>
-    <input type="submit" value="Add Sacco">
+  <form id="loginForm">
+    <h3>Admin Login</h3>
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <input type="submit" value="Login">
   </form>
 
-  <form id="addMatatuForm">
-    <h3>Add Matatu to Sacco</h3>
-    <input type="text" id="matatuCode" placeholder="Matatu Code" required>
-    <input type="text" id="matatuSacco" placeholder="Sacco Name" required>
-    <input type="text" id="matatuPlate" placeholder="Plate Number" required>
-    <input type="text" id="matatuTill" placeholder="Till Number" required>
-    <input type="text" id="matatuOwner" placeholder="Owner Name">
-    <input type="text" id="matatuContact" placeholder="Owner Contact">
-    <input type="text" id="matatuLogbook" placeholder="Logbook Number">
-    <input type="submit" value="Add Matatu">
-  </form>
+  <div id="adminContent" style="display: none;">
+    <div class="section">
+      <h3>List of All Saccos</h3>
+      <table id="saccoListTable">
+        <thead>
+          <tr>
+            <th>Name</th><th>Contact</th><th>Licence</th><th>Till Number</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-  <div class="section">
-    <h3>Active Matatus (used USSD in last 2 months)</h3>
-    <table id="activeTable">
-      <thead>
-        <tr>
-          <th>Matatu Code</th><th>Sacco</th><th>Phone</th><th>Status</th><th>Paid At</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <form id="addSaccoForm">
+      <h3>Add Sacco</h3>
+      <input type="text" id="saccoName" placeholder="Sacco Name" required>
+      <input type="text" id="saccoContact" placeholder="Sacco Contact" required>
+      <input type="text" id="saccoLicence" placeholder="Licence Email/Number" required>
+      <input type="text" id="saccoTill" placeholder="Sacco Till Number" required>
+      <input type="submit" value="Add Sacco">
+    </form>
 
-  <div class="section">
-    <h3>Inactive Matatus (no USSD in over 2 months)</h3>
-    <table id="inactiveTable">
-      <thead>
-        <tr>
-          <th>Matatu Code</th><th>Sacco</th><th>Phone</th><th>Status</th><th>Paid At</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="section">
+      <h3>List of All Matatus</h3>
+      <table id="matatuListTable">
+        <thead>
+          <tr>
+            <th>Matatu Code</th><th>Sacco</th><th>Plate</th><th>Till</th><th>Owner</th><th>Contact</th><th>Logbook</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <form id="addMatatuForm">
+      <h3>Add Matatu to Sacco</h3>
+      <input type="text" id="matatuCode" placeholder="Matatu Code" required>
+      <input type="text" id="matatuSacco" placeholder="Sacco Name" required>
+      <input type="text" id="matatuPlate" placeholder="Plate Number" required>
+      <input type="text" id="matatuTill" placeholder="Till Number" required>
+      <input type="text" id="matatuOwner" placeholder="Owner Name">
+      <input type="text" id="matatuContact" placeholder="Owner Contact">
+      <input type="text" id="matatuLogbook" placeholder="Logbook Number">
+      <input type="submit" value="Add Matatu">
+    </form>
   </div>
 
 <script>
-  fetch('/api/teketeke/all-transactions')
-    .then(res => res.json())
-    .then(data => {
-      const now = new Date();
-      const activeTbody = document.querySelector('#activeTable tbody');
-      const inactiveTbody = document.querySelector('#inactiveTable tbody');
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
 
-      data.records.forEach(tx => {
-        const paidAt = tx.paidAt ? new Date(tx.paidAt) : null;
-        const isActive = paidAt && (now - paidAt < 60 * 24 * 60 * 60 * 1000); // 60 days
+  fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success && data.role === 'admin') {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      loadSaccos();
+      loadMatatus();
+    } else {
+      alert('Access denied or invalid credentials');
+    }
+  })
+  .catch(() => alert('Login request failed'));
+});
+
+function loadSaccos() {
+  fetch('/api/teketeke/saccos')
+    .then(res => res.json())
+    .then(saccos => {
+      const tbody = document.querySelector('#saccoListTable tbody');
+      tbody.innerHTML = '';
+      saccos.forEach(sacco => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${tx.matatuCode}</td>
-          <td>${tx.sacco || '-'}</td>
-          <td>${tx.phone}</td>
-          <td>${tx.status}</td>
-          <td>${tx.paidAt || '-'}</td>
+          <td>${sacco.name}</td>
+          <td>${sacco.contact}</td>
+          <td>${sacco.licence}</td>
+          <td>${sacco.till}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick="editSacco('${sacco.name}')">Edit</button>
+            <button class="action-btn" onclick="deleteSacco('${sacco.name}')">Delete</button>
+          </td>
         `;
-        (isActive ? activeTbody : inactiveTbody).appendChild(tr);
+        tbody.appendChild(tr);
       });
     });
+}
+
+function loadMatatus() {
+  fetch('/api/teketeke/matatus')
+    .then(res => res.json())
+    .then(matatus => {
+      const tbody = document.querySelector('#matatuListTable tbody');
+      tbody.innerHTML = '';
+      matatus.forEach(mat => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${mat.code}</td>
+          <td>${mat.sacco}</td>
+          <td>${mat.plate}</td>
+          <td>${mat.tillNumber}</td>
+          <td>${mat.owner}</td>
+          <td>${mat.ownerContact}</td>
+          <td>${mat.logbook}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick="editMatatu('${mat.code}')">Edit</button>
+            <button class="action-btn" onclick="deleteMatatu('${mat.code}')">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+}
 </script>
 </body>
 </html>
