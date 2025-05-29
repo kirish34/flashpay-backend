@@ -2,224 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>TekeTeke Dashboard</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background: #f0f8ff;
-    color: #333;
-  }
-  header {
-    background-color: #007bff;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    border-radius: 8px;
-  }
-  .stats-cards {
-    display: flex;
-    gap: 15px;
-    margin: 20px 0;
-  }
-  .card {
-    flex: 1;
-    background: white;
-    padding: 15px;
-    border-left: 5px solid #007bff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    border-radius: 5px;
-  }
-  .filters, .forms {
-    margin-top: 20px;
-    background: white;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  }
-  .filters input, .filters select, .forms input {
-    margin-right: 10px;
-    margin-bottom: 10px;
-  }
-  .forms input[type="submit"] {
-    padding: 5px 10px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-  }
-  button.export, button.print {
-    background: #28a745;
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    margin-top: 10px;
-    margin-right: 10px;
-    cursor: pointer;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-  th, td {
-    padding: 10px;
-    border: 1px solid #ccc;
-    text-align: left;
-  }
-  th {
-    background-color: #007bff;
-    color: white;
-  }
-  .status-paid { background: #d4edda; }
-  .status-initiated { background: #fff3cd; }
-  .status-pending { background: #f8d7da; }
-  .edit-btn, .delete-btn {
-    background: #ffc107;
-    border: none;
-    padding: 5px 10px;
-    color: #000;
-    cursor: pointer;
-    margin-left: 5px;
-    border-radius: 4px;
-  }
-  .delete-btn { background: #dc3545; color: white; }
-</style>
+  <title>TekeTeke Admin Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #eef4fb;
+    }
+    h1 {
+      color: #1e88e5;
+    }
+    form {
+      margin-top: 20px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    form h3 {
+      margin-bottom: 10px;
+      color: #1976d2;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    input[type="submit"] {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 40px;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background: #1976d2;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f0f8ff;
+    }
+  </style>
 </head>
 <body>
-  <header>TekeTeke Admin Dashboard</header>
-  <div class="stats-cards">
-    <div class="card" id="totalSaccos">Saccos: 0</div>
-    <div class="card" id="totalMatatus">Matatus: 0</div>
-    <div class="card" id="totalTransactions">Transactions: 0</div>
-    <div class="card" id="statusBreakdown">Paid: 0 | Initiated: 0 | Pending: 0</div>
-  </div>
+  <h1>TekeTeke Admin Dashboard</h1>
 
-  <div class="forms">
-    <h3>Login</h3>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <input type="submit" value="Login" onclick="loginUser()">
-  </div>
+  <form id="addSaccoForm">
+    <h3>Add Sacco</h3>
+    <input type="text" id="saccoName" placeholder="Sacco Name" required>
+    <input type="text" id="saccoContact" placeholder="Sacco Contact" required>
+    <input type="text" id="saccoLicence" placeholder="Licence Number" required>
+    <input type="submit" value="Add Sacco">
+  </form>
 
-  <div class="forms" id="adminSection" style="display:none;">
-    <h3>Add/Edit Sacco</h3>
-    <input type="text" id="newSacco" placeholder="Sacco Name">
-    <input type="text" id="newSaccoContact" placeholder="Sacco Contact">
-    <input type="text" id="newSaccoLicence" placeholder="Licence Number">
-    <input type="submit" value="Add Sacco" onclick="addSacco()">
+  <form id="addMatatuForm">
+    <h3>Add Matatu</h3>
+    <input type="text" id="matatuCode" placeholder="Matatu Code" required>
+    <input type="text" id="matatuSacco" placeholder="Sacco Name" required>
+    <input type="text" id="matatuPlate" placeholder="Plate Number" required>
+    <input type="text" id="matatuTill" placeholder="Till Number" required>
+    <input type="text" id="matatuOwner" placeholder="Owner Name">
+    <input type="text" id="matatuContact" placeholder="Owner Contact">
+    <input type="text" id="matatuLogbook" placeholder="Logbook Number">
+    <input type="submit" value="Add Matatu">
+  </form>
 
-    <h3>Add/Edit Matatu</h3>
-    <input type="text" id="newMatatuCode" placeholder="Matatu Code">
-    <input type="text" id="newMatatuSacco" placeholder="Sacco Name">
-    <input type="text" id="newMatatuUSSD" placeholder="USSD Code">
-    <input type="text" id="newMatatuPlate" placeholder="Plate Number">
-    <input type="text" id="newMatatuOwner" placeholder="Owner Name">
-    <input type="text" id="newMatatuOwnerContact" placeholder="Owner Contact">
-    <input type="text" id="newMatatuLogbook" placeholder="Logbook Number">
-    <input type="text" id="newMatatuTill" placeholder="Till Number">
-    <input type="submit" value="Add Matatu" onclick="addMatatu()">
-  </div>
-
-  <div class="filters">
-    <label for="saccoFilter">Sacco:</label>
-    <select id="saccoFilter" onchange="applyFilters()"></select>
-    <label for="matatuFilter">Matatu:</label>
-    <select id="matatuFilter" onchange="applyFilters()"></select>
-    <label for="dateFilter">Date:</label>
-    <input type="date" id="dateFilter">
-    <label for="statusFilter">Status:</label>
-    <select id="statusFilter">
-      <option value="">All</option>
-      <option value="paid">Paid</option>
-      <option value="initiated">Initiated</option>
-      <option value="pending">Pending</option>
-    </select>
-    <label for="searchInput">Search:</label>
-    <input type="text" id="searchInput" placeholder="Search phone or amount" oninput="applyFilters()">
-    <button class="export" onclick="exportToCSV(filteredTransactions)">Export to CSV</button>
-    <button class="print" onclick="window.print()">Print View</button>
-  </div>
-
-  <table id="recordsTable">
+  <table id="txTable">
     <thead>
       <tr>
-        <th>Matatu</th>
+        <th>Matatu Code</th>
         <th>Sacco</th>
-        <th>USSD</th>
-        <th>Plate</th>
-        <th>Owner</th>
-        <th>Contact</th>
-        <th>Logbook</th>
-        <th>Till</th>
         <th>Amount</th>
-        <th>Phone</th>
         <th>Status</th>
-        <th>Time</th>
-        <th>Actions</th>
+        <th>Phone</th>
+        <th>Paid At</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-<script>
-let userRole = null;
-let userSacco = null;
-
-function loginUser() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
-
-  fetch('/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      userRole = data.role;
-      userSacco = data.saccoName || null;
-      alert(`✅ Login successful as ${userRole}`);
-
-      if (userRole === 'admin') {
-        document.getElementById("adminSection").style.display = "block";
-      }
-
-      fetchAndRender();
-    } else {
-      alert("❌ Invalid credentials");
-    }
-  })
-  .catch(() => alert("⚠️ Server error. Please try again later."));
-}
-
-function fetchAndRender() {
-  let endpoint = '/api/teketeke/all-transactions';
-  if (userRole === 'sacco' && userSacco) {
-    endpoint = `/api/sacco/${encodeURIComponent(userSacco)}/fare-transactions`;
-  }
-
-  fetch(endpoint)
-    .then(res => res.json())
-    .then(data => {
-      transactions = data.records;
-      applyFilters();
-    });
-}
-
-function addSacco() {
-  if (userRole !== 'admin') return alert('❌ Only admin can add Saccos.');
-  // Add sacco logic...
-}
-
-function addMatatu() {
-  if (userRole !== 'admin') return alert('❌ Only admin can add Matatus.');
-  // Add matatu logic...
-}
-</script>
+  <script>
+    fetch('/api/teketeke/all-transactions')
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector('#txTable tbody');
+        data.records.forEach(tx => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${tx.matatuCode}</td>
+            <td>${tx.sacco || '-'}</td>
+            <td>${tx.amountPaid || tx.amount}</td>
+            <td>${tx.status}</td>
+            <td>${tx.phone}</td>
+            <td>${tx.paidAt || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+  </script>
 </body>
 </html>
