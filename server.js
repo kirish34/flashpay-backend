@@ -56,6 +56,7 @@ app.get('/dashboard', (_, res) => res.sendFile(path.join(__dirname, 'public', 'd
 app.get('/branch-dashboard', (_, res) => res.sendFile(path.join(__dirname, 'public', 'branch-dashboard.html')));
 app.get('/pos', (_, res) => res.sendFile(path.join(__dirname, 'public', 'pos.html')));
 app.get('/ussd-simulator', (_, res) => res.sendFile(path.join(__dirname, 'public', 'ussd-simulator.html')));
+app.use('/teketeke-dashboard', express.static(path.join(__dirname, 'public', 'teketeke-dashboard')));
 
 // 🔑 Login
 app.post('/login', (req, res) => {
