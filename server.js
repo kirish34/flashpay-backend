@@ -461,6 +461,16 @@ app.get('/api/sacco/:saccoName/fare-transactions', async (req, res) => {
     res.status(500).json({ error: 'Failed to load transactions' });
   }
 });
+app.get('/api/teketeke/all-transactions', async (req, res) => {
+  try {
+    const txPath = path.join(__dirname, 'teketeke_tx.json');
+    const transactions = await fs.readJson(txPath).catch(() => []);
+    res.json({ records: transactions });
+  } catch (err) {
+    console.error("❌ Failed to load TekeTeke transactions:", err.message);
+    res.status(500).json({ error: 'Failed to load transactions' });
+  }
+});
 
 // ✅ Start Server
 app.listen(PORT, '0.0.0.0', () => {
