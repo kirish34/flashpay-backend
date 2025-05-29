@@ -12,7 +12,7 @@
     h2 {
       color: #444;
     }
-    input, button {
+    input, button, select {
       padding: 10px;
       margin: 10px 0;
     }
@@ -20,6 +20,8 @@
       border-collapse: collapse;
       width: 100%;
       margin-top: 20px;
+      background: white;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
     }
     th, td {
       border: 1px solid #ccc;
@@ -27,7 +29,27 @@
       text-align: center;
     }
     th {
-      background: #eee;
+      background: #1976d2;
+      color: white;
+    }
+    tr:hover {
+      background: #e3f2fd;
+    }
+    .summary-box {
+      background: #e3f2fd;
+      padding: 15px;
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    .export {
+      background: #4CAF50;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
     }
   </style>
 </head>
@@ -35,41 +57,83 @@
 
   <h2>SACCO Fare Dashboard</h2>
 
-  <label for="saccoName">Enter SACCO Name:</label><br>
-  <input type="text" id="saccoName" placeholder="e.g. CityLink" />
-  <button onclick="loadDashboard()">Load Transactions</button>
+  <div id="loginSection">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="loginUser()">Login</button>
+  </div>
 
-  <div id="summary"></div>
-  <table id="resultsTable" style="display:none;">
-    <thead>
-      <tr>
-        <th>Matatu Code</th>
-        <th>Amount (KES)</th>
-        <th>Phone</th>
-        <th>Status</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="dashboardSection" style="display:none;">
+    <div>
+      <label for="dateFilter">Date:</label>
+      <input type="date" id="dateFilter" onchange="applyFilters()">
+
+      <label for="statusFilter">Status:</label>
+      <select id="statusFilter" onchange="applyFilters()">
+        <option value="">All</option>
+        <option value="paid">Paid</option>
+        <option value="initiated">Initiated</option>
+        <option value="pending">Pending</option>
+      </select>
+      <button class="export" onclick="exportToCSV()">Export to CSV</button>
+    </div>
+
+    <div id="summary" class="summary-box"></div>
+
+    <table id="resultsTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Matatu Code</th>
+          <th>Amount (KES)</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
+    let saccoName = null;
+    let transactions = [];
+
+    function loginUser() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.role === 'sacco') {
+          saccoName = data.saccoName;
+          document.getElementById("loginSection").style.display = "none";
+          document.getElementById("dashboardSection").style.display = "block";
+          loadDashboard();
+        } else {
+          alert("❌ Invalid SACCO credentials or not authorized.");
+        }
+      })
+      .catch(() => alert("⚠️ Server error. Please try again later."));
+    }
+
     async function loadDashboard() {
-      const saccoName = document.getElementById('saccoName').value;
-      if (!saccoName) {
-        alert("Please enter SACCO name.");
-        return;
-      }
+      if (!saccoName) return;
 
       try {
         const res = await fetch(`/api/sacco/${saccoName}/fare-transactions`);
         const data = await res.json();
+        transactions = data.records || [];
 
         const summaryDiv = document.getElementById("summary");
         const table = document.getElementById("resultsTable");
         const tbody = table.querySelector("tbody");
 
-        if (data.records.length === 0) {
+        if (transactions.length === 0) {
           summaryDiv.innerHTML = `<p>No transactions found for SACCO: <strong>${saccoName}</strong></p>`;
           table.style.display = "none";
           return;
@@ -79,26 +143,62 @@
           <p><strong>SACCO:</strong> ${data.sacco}</p>
           <p><strong>Matatus:</strong> ${data.matatus}</p>
           <p><strong>Total Transactions:</strong> ${data.transactions}</p>
+          <p><strong>Total Amount:</strong> KES ${transactions.reduce((sum, tx) => sum + (tx.amountPaid || tx.amount || 0), 0).toLocaleString()}</p>
         `;
 
-        tbody.innerHTML = "";
-        data.records.forEach(tx => {
-          const row = `
-            <tr>
-              <td>${tx.matatuCode}</td>
-              <td>${tx.amount}</td>
-              <td>${tx.phone}</td>
-              <td>${tx.status}</td>
-              <td>${new Date(tx.timestamp).toLocaleString()}</td>
-            </tr>`;
-          tbody.innerHTML += row;
-        });
-
+        applyFilters();
         table.style.display = "table";
       } catch (err) {
         alert("Failed to load transactions.");
         console.error(err);
       }
+    }
+
+    function applyFilters() {
+      const dateValue = document.getElementById("dateFilter").value;
+      const statusValue = document.getElementById("statusFilter").value;
+      const tbody = document.querySelector("#resultsTable tbody");
+      tbody.innerHTML = "";
+
+      const filtered = transactions.filter(tx => {
+        const dateMatch = !dateValue || new Date(tx.timestamp).toISOString().startsWith(dateValue);
+        const statusMatch = !statusValue || tx.status === statusValue;
+        return dateMatch && statusMatch;
+      });
+
+      filtered.forEach(tx => {
+        const row = `
+          <tr>
+            <td>${tx.matatuCode}</td>
+            <td>${tx.amount}</td>
+            <td>${tx.phone}</td>
+            <td>${tx.status}</td>
+            <td>${new Date(tx.timestamp).toLocaleString()}</td>
+          </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function exportToCSV() {
+      const rows = [['Matatu Code', 'Amount (KES)', 'Phone', 'Status', 'Time']];
+      transactions.forEach(tx => {
+        rows.push([
+          tx.matatuCode,
+          tx.amount,
+          tx.phone,
+          tx.status,
+          new Date(tx.timestamp).toLocaleString()
+        ]);
+      });
+
+      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `sacco_${saccoName}_transactions.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 
