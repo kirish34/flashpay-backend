@@ -2,271 +2,165 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Matatu Dashboard</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background: #eef4fb;
-  }
-
-  h2 {
-    color: #fff;
-    background-color: #1e88e5;
-    padding: 10px 20px;
-    border-radius: 10px;
-    width: fit-content;
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-top: 20px;
-    background: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.08);
-  }
-
-  th, td {
-    padding: 12px;
-    border-bottom: 1px solid #ddd;
-    text-align: left;
-  }
-
-  th {
-    background-color: #1976d2;
-    color: white;
-  }
-
-  tr:hover {
-    background-color: #f0f8ff;
-  }
-
-  .stats {
-    margin-top: 20px;
-    background: #e3f2fd;
-    padding: 15px;
-    border: 1px solid #90caf9;
-    border-radius: 10px;
-    color: #0d47a1;
-    font-weight: bold;
-  }
-
-  .filters, .forms {
-    margin-top: 20px;
-    background: #ffffff;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  }
-
-  .filters label, .forms label {
-    font-weight: bold;
-  }
-
-  .filters input, .filters select, .forms input {
-    margin-right: 10px;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #bbb;
-  }
-
-  .forms input[type="submit"] {
-    padding: 10px 20px;
-    background-color: #2196f3;
-    border: none;
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-  }
-
-  .forms input[type="submit"]:hover {
-    background-color: #1976d2;
-  }
-</style>
+  <title>TekeTeke Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f8ff;
+      color: #333;
+    }
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 8px;
+    }
+    .stats-cards {
+      display: flex;
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .card {
+      flex: 1;
+      background: white;
+      padding: 15px;
+      border-left: 5px solid #007bff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 5px;
+    }
+    .filters, .forms {
+      margin-top: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .filters input, .filters select, .forms input {
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .forms input[type="submit"] {
+      padding: 5px 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button.export, button.print {
+      background: #28a745;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      margin-top: 10px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    .status-paid { background: #d4edda; }
+    .status-initiated { background: #fff3cd; }
+    .status-pending { background: #f8d7da; }
+    .edit-btn, .delete-btn {
+      background: #ffc107;
+      border: none;
+      padding: 5px 10px;
+      color: #000;
+      cursor: pointer;
+      margin-left: 5px;
+      border-radius: 4px;
+    }
+    .delete-btn { background: #dc3545; color: white; }
+  </style>
 </head>
 <body>
-<h2 id="title">Matatu Dashboard</h2>
-<div class="forms">
-  <h3>Add New Sacco</h3>
-  <input type="text" id="newSacco" placeholder="Sacco Name">
-  <input type="text" id="newSaccoContact" placeholder="Sacco Contact">
-  <input type="text" id="newSaccoLicence" placeholder="Licence Number">
-  <input type="submit" value="Add Sacco" onclick="addSacco()">
+  <header>TekeTeke Admin Dashboard</header>
+  <div class="stats-cards">
+    <div class="card" id="totalSaccos">Saccos: 0</div>
+    <div class="card" id="totalMatatus">Matatus: 0</div>
+    <div class="card" id="totalTransactions">Transactions: 0</div>
+    <div class="card" id="statusBreakdown">Paid: 0 | Initiated: 0 | Pending: 0</div>
+  </div>
 
-  <h3>Add New Matatu</h3>
-  <input type="text" id="newMatatuCode" placeholder="Matatu Code">
-  <input type="text" id="newMatatuSacco" placeholder="Sacco Name">
-  <input type="text" id="newMatatuUSSD" placeholder="USSD Code">
-  <input type="text" id="newMatatuPlate" placeholder="Plate Number">
-  <input type="text" id="newMatatuOwner" placeholder="Owner Name">
-  <input type="text" id="newMatatuOwnerContact" placeholder="Owner Contact">
-  <input type="text" id="newMatatuLogbook" placeholder="Logbook Number">
-  <input type="text" id="newMatatuTill" placeholder="Till Number">
-  <input type="submit" value="Add Matatu" onclick="addMatatu()">
-</div>
+  <div class="forms">
+    <h3>Add/Edit Sacco</h3>
+    <input type="text" id="newSacco" placeholder="Sacco Name">
+    <input type="text" id="newSaccoContact" placeholder="Sacco Contact">
+    <input type="text" id="newSaccoLicence" placeholder="Licence Number">
+    <input type="submit" value="Add Sacco" onclick="addSacco()">
 
-<div class="filters">
-  <label for="saccoFilter">Sacco:</label>
-  <select id="saccoFilter" onchange="applyFilters()"></select>
-  <label for="matatuFilter">Matatu:</label>
-  <select id="matatuFilter" onchange="applyFilters()"></select>
-  <label for="dateFilter">Date:</label>
-  <input type="date" id="dateFilter">
-  <label for="statusFilter">Status:</label>
-  <select id="statusFilter">
-    <option value="">All</option>
-    <option value="paid">Paid</option>
-    <option value="initiated">Initiated</option>
-    <option value="pending">Pending</option>
-  </select>
-  <label for="searchInput">Search:</label>
-  <input type="text" id="searchInput" placeholder="Search phone or amount" oninput="applyFilters()">
-</div>
-<div class="stats" id="statsBox"></div>
-<table id="recordsTable">
-  <thead>
-    <tr>
-      <th>Matatu</th>
-      <th>Sacco</th>
-      <th>USSD</th>
-      <th>Plate</th>
-      <th>Owner</th>
-      <th>Contact</th>
-      <th>Logbook</th>
-      <th>Till</th>
-      <th>Amount</th>
-      <th>Phone</th>
-      <th>Status</th>
-      <th>Time</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+    <h3>Add/Edit Matatu</h3>
+    <input type="text" id="newMatatuCode" placeholder="Matatu Code">
+    <input type="text" id="newMatatuSacco" placeholder="Sacco Name">
+    <input type="text" id="newMatatuUSSD" placeholder="USSD Code">
+    <input type="text" id="newMatatuPlate" placeholder="Plate Number">
+    <input type="text" id="newMatatuOwner" placeholder="Owner Name">
+    <input type="text" id="newMatatuOwnerContact" placeholder="Owner Contact">
+    <input type="text" id="newMatatuLogbook" placeholder="Logbook Number">
+    <input type="text" id="newMatatuTill" placeholder="Till Number">
+    <input type="submit" value="Add Matatu" onclick="addMatatu()">
+  </div>
+
+  <div class="filters">
+    <label for="saccoFilter">Sacco:</label>
+    <select id="saccoFilter" onchange="applyFilters()"></select>
+    <label for="matatuFilter">Matatu:</label>
+    <select id="matatuFilter" onchange="applyFilters()"></select>
+    <label for="dateFilter">Date:</label>
+    <input type="date" id="dateFilter">
+    <label for="statusFilter">Status:</label>
+    <select id="statusFilter">
+      <option value="">All</option>
+      <option value="paid">Paid</option>
+      <option value="initiated">Initiated</option>
+      <option value="pending">Pending</option>
+    </select>
+    <label for="searchInput">Search:</label>
+    <input type="text" id="searchInput" placeholder="Search phone or amount" oninput="applyFilters()">
+    <button class="export" onclick="exportToCSV(filteredTransactions)">Export to CSV</button>
+    <button class="print" onclick="window.print()">Print View</button>
+  </div>
+
+  <table id="recordsTable">
+    <thead>
+      <tr>
+        <th>Matatu</th>
+        <th>Sacco</th>
+        <th>USSD</th>
+        <th>Plate</th>
+        <th>Owner</th>
+        <th>Contact</th>
+        <th>Logbook</th>
+        <th>Till</th>
+        <th>Amount</th>
+        <th>Phone</th>
+        <th>Status</th>
+        <th>Time</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
 <script>
-  let transactions = [];
-  let allMatatus = [];
-  let allSaccos = [];
-
-  fetch('/api/teketeke/all-transactions')
-    .then(res => res.json())
-    .then(data => {
-      transactions = data.records;
-      allMatatus = [...new Set(transactions.map(tx => tx.matatuCode))];
-      allSaccos = [...new Set(transactions.map(tx => tx.sacco))];
-
-      populateFilters();
-      document.getElementById("statsBox").innerHTML = `<strong>Total Transactions:</strong> ${transactions.length}`;
-      renderTable(transactions);
-    });
-
-  function populateFilters() {
-    const matatuSelect = document.getElementById("matatuFilter");
-    matatuSelect.innerHTML = `<option value="">All</option>` +
-      allMatatus.map(m => `<option value="${m}">${m}</option>`).join('');
-
-    const saccoSelect = document.getElementById("saccoFilter");
-    saccoSelect.innerHTML = `<option value="">All</option>` +
-      allSaccos.map(s => `<option value="${s}">${s}</option>`).join('');
-  }
-
-  function renderTable(records) {
-    const tbody = document.querySelector("#recordsTable tbody");
-    tbody.innerHTML = "";
-    records.forEach(tx => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${tx.matatuCode}</td>
-        <td>${tx.sacco || ''}</td>
-        <td>${tx.ussdCode || ''}</td>
-        <td>${tx.plate || ''}</td>
-        <td>${tx.owner || ''}</td>
-        <td>${tx.ownerContact || ''}</td>
-        <td>${tx.logbook || ''}</td>
-        <td>${tx.tillNumber || ''}</td>
-        <td>${tx.amount}</td>
-        <td>${tx.phone}</td>
-        <td>${tx.status}</td>
-        <td>${new Date(tx.timestamp).toLocaleString()}</td>
-      `;
-      tbody.appendChild(row);
-    });
-  }
-
-  function applyFilters() {
-    const dateValue = document.getElementById("dateFilter").value;
-    const statusValue = document.getElementById("statusFilter").value;
-    const searchValue = document.getElementById("searchInput").value.toLowerCase();
-    const matatuValue = document.getElementById("matatuFilter").value;
-    const saccoValue = document.getElementById("saccoFilter").value;
-
-    let filtered = transactions;
-
-    if (dateValue) {
-      filtered = filtered.filter(tx => new Date(tx.timestamp).toISOString().startsWith(dateValue));
-    }
-    if (statusValue) {
-      filtered = filtered.filter(tx => tx.status === statusValue);
-    }
-    if (matatuValue) {
-      filtered = filtered.filter(tx => tx.matatuCode === matatuValue);
-    }
-    if (saccoValue) {
-      filtered = filtered.filter(tx => tx.sacco === saccoValue);
-    }
-    if (searchValue) {
-      filtered = filtered.filter(tx =>
-        tx.phone.toLowerCase().includes(searchValue) || tx.amount.toString().includes(searchValue)
-      );
-    }
-
-    renderTable(filtered);
-  }
-
-  function addSacco() {
-    const newSacco = document.getElementById("newSacco").value;
-    const contact = document.getElementById("newSaccoContact").value;
-    const licence = document.getElementById("newSaccoLicence").value;
-    if (newSacco && !allSaccos.includes(newSacco)) {
-      allSaccos.push(newSacco);
-      populateFilters();
-      alert("✅ New sacco added\nContact: " + contact + "\nLicence: " + licence);
-    }
-  }
-
-  function addMatatu() {
-    const code = document.getElementById("newMatatuCode").value;
-    const sacco = document.getElementById("newMatatuSacco").value;
-    const ussd = document.getElementById("newMatatuUSSD").value;
-    const plate = document.getElementById("newMatatuPlate").value;
-    const owner = document.getElementById("newMatatuOwner").value;
-    const ownerContact = document.getElementById("newMatatuOwnerContact").value;
-    const logbook = document.getElementById("newMatatuLogbook").value;
-    const till = document.getElementById("newMatatuTill").value;
-
-    if (code && sacco && ussd && plate && owner && ownerContact && logbook && till) {
-      transactions.push({
-        matatuCode: code,
-        sacco,
-        ussdCode: ussd,
-        plate,
-        owner,
-        ownerContact,
-        logbook,
-        tillNumber: till,
-        amount: 0,
-        phone: '',
-        status: 'pending',
-        timestamp: new Date().toISOString()
-      });
-      allMatatus.push(code);
-      if (!allSaccos.includes(sacco)) allSaccos.push(sacco);
-      populateFilters();
-      renderTable(transactions);
-      alert("✅ New matatu added");
-    }
-  }
+// Real-time update notification
+setInterval(() => alert("🔔 New updates may be available. Please refresh to sync."), 60000);
 </script>
 </body>
 </html>
