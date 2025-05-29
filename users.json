@@ -1,5 +1,10 @@
 [
   { "username": "admin", "password": "1234", "role": "supermarket" },
   { "username": "citylink", "password": "city123", "role": "sacco" },
-  { "username": "matatu123", "password": "matpass", "role": "matatu" }
+  { "username": "matatu123", "password": "matpass", "role": "matatu" },
+  {
+    "username": "admin",
+    "password": "admin123",
+    "role": "admin"
+  }
 ]
