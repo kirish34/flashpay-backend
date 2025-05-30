@@ -1,0 +1,10 @@
+[
+  {
+    "matatuCode": "2345",
+    "savingType": "daily",
+    "amount": 100,
+    "autoCollect": true,
+    "autoTime": "08:00",
+    "tillNumber": "123456"
+  }
+]

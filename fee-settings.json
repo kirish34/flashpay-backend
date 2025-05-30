@@ -1,0 +1,10 @@
+[
+  {
+    "matatuCode": "2345",
+    "vehicleType": "minibus",
+    "dailyFee": 200,
+    "autoCollect": true,
+    "autoTime": "07:00",
+    "tillNumber": "123456"
+  }
+]
